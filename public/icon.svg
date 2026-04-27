@@ -1,0 +1,23 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @media (prefers-color-scheme: light) {
+      .background { fill: #3b82f6; }
+      .foreground { fill: white; }
+    }
+    @media (prefers-color-scheme: dark) {
+      .background { fill: #3b82f6; }
+      .foreground { fill: white; }
+    }
+  </style>
+  <rect class="background" width="180" height="180" rx="37" />
+  <g transform="translate(40, 40)">
+    <path class="foreground" stroke-width="8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none"
+      d="M50 20a15 15 0 1 0-29.985.625 20 20 0 0 0-12.63 28.85 20 20 0 0 0 2.78 32.94A20 20 0 1 0 50 90Z"/>
+    <path class="foreground" stroke-width="8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none"
+      d="M50 20a15 15 0 1 1 29.985.625 20 20 0 0 1 12.63 28.85 20 20 0 0 1-2.78 32.94A20 20 0 1 1 50 90Z"/>
+    <path class="foreground" stroke-width="8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none"
+      d="M65 60a5 5 0 0 1-5-5 5 5 0 0 0-5-5 5 5 0 0 1-5-5 5 5 0 0 0-5-5"/>
+    <path class="foreground" stroke-width="8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" fill="none"
+      d="M35 60a5 5 0 0 0 5-5 5 5 0 0 1 5-5 5 5 0 0 0 5-5 5 5 0 0 1 5-5"/>
+  </g>
+</svg>
