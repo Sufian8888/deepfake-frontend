@@ -2,22 +2,36 @@
 
 import type React from "react"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { Upload, FileVideo, X, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
+import { FALLBACK_MODEL_OPTIONS, type ModelOption } from "@/lib/model-options"
 
 interface UploadPanelProps {
   onFileSelect: (file: File) => Promise<void>
   isAnalyzing: boolean
-  onStartAnalysis: () => void
+  onStartAnalysis: (modelKey: string) => void
+  modelOptions?: ModelOption[]
 }
 
-export function UploadPanel({ onFileSelect, isAnalyzing, onStartAnalysis }: UploadPanelProps) {
+export function UploadPanel({ onFileSelect, isAnalyzing, onStartAnalysis, modelOptions = FALLBACK_MODEL_OPTIONS }: UploadPanelProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [selectedModel, setSelectedModel] = useState(modelOptions[0]?.key || "final_model")
+
+  useEffect(() => {
+    if (!modelOptions.length) {
+      return
+    }
+
+    const exists = modelOptions.some((model) => model.key === selectedModel)
+    if (!exists) {
+      setSelectedModel(modelOptions[0].key)
+    }
+  }, [modelOptions, selectedModel])
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -134,16 +148,42 @@ export function UploadPanel({ onFileSelect, isAnalyzing, onStartAnalysis }: Uplo
               <Progress value={uploadProgress} className="h-2" />
             </div>
           ) : (
-            <Button onClick={onStartAnalysis} disabled={isAnalyzing} className="w-full glow-blue" size="lg">
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>Start Analysis</>
-              )}
-            </Button>
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <label htmlFor="model-select" className="text-sm text-muted-foreground">
+                  Select model
+                </label>
+                <select
+                  id="model-select"
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  disabled={isAnalyzing}
+                  className="w-full rounded-lg border border-border/50 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                >
+                  {modelOptions.map((model) => (
+                    <option key={model.key} value={model.key}>
+                      {model.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <Button
+                onClick={() => onStartAnalysis(selectedModel)}
+                disabled={isAnalyzing}
+                className="w-full glow-blue"
+                size="lg"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>Start Analysis</>
+                )}
+              </Button>
+            </div>
           )}
         </div>
       )}

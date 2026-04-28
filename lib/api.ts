@@ -173,8 +173,9 @@ export const uploadAPI = {
 
 // Predictions API
 export const predictionsAPI = {
-  startAnalysis: async (videoId: number) => {
-    return fetchWithAuth(`${API_BASE_URL}/predictions/${videoId}/analyze`, {
+  startAnalysis: async (videoId: number, modelKey: string = 'final_model') => {
+    const encodedModelKey = encodeURIComponent(modelKey);
+    return fetchWithAuth(`${API_BASE_URL}/predictions/${videoId}/analyze?model_key=${encodedModelKey}`, {
       method: 'POST',
     });
   },
@@ -185,6 +186,10 @@ export const predictionsAPI = {
 
   getStatus: async (videoId: number) => {
     return fetchWithAuth(`${API_BASE_URL}/predictions/${videoId}/status`);
+  },
+
+  listModels: async () => {
+    return fetchWithAuth(`${API_BASE_URL}/predictions/models`);
   },
 };
 

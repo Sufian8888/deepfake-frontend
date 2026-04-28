@@ -103,7 +103,7 @@ export default function AnalysisPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
-                <VideoComparison videoData={videoData} />
+                <VideoComparison videoData={videoData} analysisData={analysisData} />
                 <AnalysisTabs analysisData={analysisData} />
               </div>
               <div>

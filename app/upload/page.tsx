@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { UploadPanel } from "@/components/upload/upload-panel";
 import { PreviewPanel } from "@/components/upload/preview-panel";
 import { ProtectedRoute } from "@/components/protected-route";
 import { uploadAPI, predictionsAPI } from "@/lib/api";
+import { FALLBACK_MODEL_OPTIONS, type ModelOption } from "@/lib/model-options";
 import { useToast } from "@/hooks/use-toast";
 
 export default function UploadPage() {
@@ -16,6 +17,22 @@ export default function UploadPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [uploadedVideoId, setUploadedVideoId] = useState<number | null>(null);
+  const [modelOptions, setModelOptions] = useState<ModelOption[]>(FALLBACK_MODEL_OPTIONS);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await predictionsAPI.listModels();
+        if (response?.models && Array.isArray(response.models) && response.models.length > 0) {
+          setModelOptions(response.models);
+        }
+      } catch {
+        setModelOptions(FALLBACK_MODEL_OPTIONS);
+      }
+    };
+
+    fetchModels();
+  }, []);
 
   const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
@@ -41,7 +58,7 @@ export default function UploadPage() {
     }
   };
 
-  const handleStartAnalysis = async () => {
+  const handleStartAnalysis = async (modelKey: string) => {
     if (!uploadedVideoId) {
       toast({
         title: "Error",
@@ -53,10 +70,10 @@ export default function UploadPage() {
 
     setIsAnalyzing(true);
     try {
-      await predictionsAPI.startAnalysis(uploadedVideoId);
+      await predictionsAPI.startAnalysis(uploadedVideoId, modelKey);
       toast({
         title: "Analysis Started",
-        description: "Your video is being analyzed",
+        description: `Your video is being analyzed with ${modelKey} model`,
       });
       // Redirect to user dashboard after starting analysis
       setTimeout(() => {
@@ -94,6 +111,7 @@ export default function UploadPage() {
                 onFileSelect={handleFileSelect}
                 isAnalyzing={isUploading || isAnalyzing}
                 onStartAnalysis={handleStartAnalysis}
+                modelOptions={modelOptions}
               />
               <PreviewPanel file={selectedFile} />
             </div>

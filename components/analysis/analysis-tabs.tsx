@@ -22,6 +22,17 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
   const frameAnalysis = details.frame_analysis || {};
   const frameDetails = frameAnalysis.frame_details || [];
   const annotatedFrames = details.annotated_frames || [];
+  const rawModelUrl = process.env.NEXT_PUBLIC_MODEL_URL || "http://localhost:5000";
+  const normalizedModelUrl = rawModelUrl.replace(/\/$/, "");
+
+  const resolveAnnotatedFrameUrl = (framePath: string) => {
+    const normalizedFramePath = String(framePath).replace(/\\/g, "/").replace(/^\/+/, "");
+    const relativePath = normalizedFramePath
+      .replace(/^model\/analysis_results\//, "")
+      .replace(/^analysis_results\//, "");
+
+    return `${normalizedModelUrl}/model/analysis_results/${relativePath}`;
+  };
 
   // Calculate statistics from real data
   const totalFrames = frameAnalysis.total_frames || 0;
@@ -136,7 +147,7 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
             {annotatedFrames.map((framePath: string, idx: number) => (
               <div key={idx} className="relative group">
                 <img
-                  src={`http://localhost:5000/${framePath.replace(/\\/g, '/')}`}
+                  src={resolveAnnotatedFrameUrl(framePath)}
                   alt={`Annotated frame ${idx + 1}`}
                   className="w-full h-auto rounded-lg border border-border/50 transition-transform group-hover:scale-105"
                 />
@@ -188,6 +199,11 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
           <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
             <span>Analysis Mode</span>
             <Badge variant="outline">{details.mode || 'N/A'}</Badge>
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+            <span>Model Used</span>
+            <Badge variant="outline">{details.model_key || details.model_file || 'N/A'}</Badge>
           </div>
         </div>
       </Card>

@@ -2,7 +2,7 @@
 
 import { Play, Pause, Clock, Monitor, Film } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 
 interface PreviewPanelProps {
   file: File | null
@@ -13,10 +13,19 @@ export function PreviewPanel({ file }: PreviewPanelProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
 
-  // Create object URL when file changes
-  if (file && !videoUrl) {
-    setVideoUrl(URL.createObjectURL(file))
-  }
+  useEffect(() => {
+    if (!file) {
+      setVideoUrl(null)
+      return
+    }
+
+    const objectUrl = URL.createObjectURL(file)
+    setVideoUrl(objectUrl)
+
+    return () => {
+      URL.revokeObjectURL(objectUrl)
+    }
+  }, [file])
 
   const togglePlay = () => {
     if (videoRef.current) {
