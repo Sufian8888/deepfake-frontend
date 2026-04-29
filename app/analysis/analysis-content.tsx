@@ -70,9 +70,9 @@ export function AnalysisPageContent() {
         <AppSidebar />
         <main className="flex-1 overflow-auto">
           <div className="container mx-auto py-8 px-4 space-y-8">
-            <ResultsSummary data={analysisData} videoData={videoData} />
-            <VideoComparison videoId={parseInt(videoId || "0")} />
-            <AnalysisTabs data={analysisData} />
+            <ResultsSummary analysisData={analysisData} videoId={videoId} />
+            <VideoComparison videoData={videoData} analysisData={analysisData} />
+            <AnalysisTabs analysisData={analysisData} />
           </div>
         </main>
       </div>
