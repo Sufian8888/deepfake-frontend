@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { AppSidebar } from "@/components/ui/app-sidebar";
-import { VideoComparison } from "@/components/analysis/video-comparison";
-import { AnalysisTabs } from "@/components/analysis/analysis-tabs";
-import { ResultsSummary } from "@/components/analysis/results-summary";
-import { ProtectedRoute } from "@/components/protected-route";
-import { predictionsAPI, uploadAPI } from "@/lib/api";
+import { Suspense } from "react";
+import { AnalysisPageContent } from "./analysis-content";
 import { Loader2 } from "lucide-react";
 
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="w-8 h-8 animate-spin" />
+    </div>
+  );
+}
+
 export default function AnalysisPage() {
-  const searchParams = useSearchParams();
-  const videoId = searchParams.get("videoId");
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <AnalysisPageContent />
+    </Suspense>
+  );
+}
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [videoData, setVideoData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
