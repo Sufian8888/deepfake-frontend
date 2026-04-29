@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: deepfake-ui
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: '20'
+      - key: NEXT_PUBLIC_API_URL
+        value: https://deepfake-backend-qyef.onrender.com
+      - key: NEXT_PUBLIC_MODEL_API_URL
+        value: https://deepfake-model-vttw.onrender.com
