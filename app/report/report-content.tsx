@@ -1,24 +1,21 @@
 "use client";
 
-import { Suspense } from "react";
-import { ReportPageContent } from "./report-content";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { AppSidebar } from "@/components/ui/app-sidebar";
+import { ProtectedRoute } from "@/components/protected-route";
+import { ReportHeader } from "@/components/report/report-header";
+import { VerdictCard } from "@/components/report/verdict-card";
+import { HeatmapGrid } from "@/components/report/heatmap-grid";
+import { AudioSyncChart } from "@/components/report/audio-sync-chart";
+import { AnomalyTable } from "@/components/report/anomaly-table";
+import { ExplanationSummary } from "@/components/report/explanation-summary";
+import { predictionsAPI, uploadAPI } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
-function LoadingFallback() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Loader2 className="w-8 h-8 animate-spin" />
-    </div>
-  );
-}
-
-export default function ReportPage() {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <ReportPageContent />
-    </Suspense>
-  );
-}
+export function ReportPageContent() {
+  const searchParams = useSearchParams();
+  const videoId = searchParams.get("videoId");
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [videoData, setVideoData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
