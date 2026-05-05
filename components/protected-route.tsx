@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
 
@@ -12,12 +12,18 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push("/login");
+      // Store the intended destination in sessionStorage
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("redirectAfterLogin", pathname);
+      }
+      // Redirect to login with the intended page as a query parameter
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, pathname]);
 
   if (isLoading) {
     return (

@@ -1,21 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Brain, Mail, Lock, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Brain, Mail, Lock, Loader2, AlertCircle, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Store the redirect URL from query params
+  useEffect(() => {
+    const redirect = searchParams.get("redirect");
+    if (redirect && typeof window !== "undefined") {
+      sessionStorage.setItem("redirectAfterLogin", redirect);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +43,24 @@ export default function LoginPage() {
     }
   };
 
+  const handleBack = () => {
+    if (typeof window !== "undefined") {
+      window.history.back();
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      {/* Back Button */}
+      <button
+        type="button"
+        onClick={handleBack}
+        className="absolute top-4 left-4 z-50 p-2 hover:bg-muted rounded-lg transition-colors"
+        title="Go back"
+      >
+        <ArrowLeft className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+      </button>
+
       {/* Animated background */}
       <div className="absolute inset-0 from-background via-background to-primary/5" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(120,119,198,0.15),transparent)]" />

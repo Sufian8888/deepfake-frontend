@@ -10,6 +10,7 @@ import { Button } from "./button";
 const publicLinks = [
   { href: "/", label: "Home" },
   { href: "/docs", label: "Documentation" },
+  { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
 ];
 

@@ -54,12 +54,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authAPI.login(email, password);
       setUser(response.user);
-      // Redirect admin to admin panel, regular users to user dashboard
-      if (response.user.role === "admin") {
-        router.push("/admin");
-      } else {
-        router.push("/user-dashboard");
+      
+      // Check if there's a redirect URL in sessionStorage or query parameter
+      let redirectUrl = "/user-dashboard";
+      if (typeof window !== "undefined") {
+        const storedRedirect = sessionStorage.getItem("redirectAfterLogin");
+        if (storedRedirect && storedRedirect !== "/login") {
+          redirectUrl = storedRedirect;
+          sessionStorage.removeItem("redirectAfterLogin");
+        } else if (response.user.role === "admin") {
+          redirectUrl = "/admin";
+        }
+      } else if (response.user.role === "admin") {
+        redirectUrl = "/admin";
       }
+      
+      router.push(redirectUrl);
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || "Login failed");
     }

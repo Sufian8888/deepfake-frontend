@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  ArrowLeft,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -56,8 +57,24 @@ export default function SignupPage() {
     }
   };
 
+  const handleBack = () => {
+    if (typeof window !== "undefined") {
+      window.history.back();
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      {/* Back Button */}
+      <button
+        type="button"
+        onClick={handleBack}
+        className="absolute top-4 left-4 z-50 p-2 hover:bg-muted rounded-lg transition-colors"
+        title="Go back"
+      >
+        <ArrowLeft className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+      </button>
+
       {/* Animated background */}
       <div className="absolute inset-0 from-background via-background to-secondary/5" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(198,119,198,0.15),transparent)]" />
