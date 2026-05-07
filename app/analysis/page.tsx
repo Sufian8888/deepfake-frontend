@@ -1,5 +1,3 @@
-"use client";
-
 import { Suspense } from "react";
 import { AnalysisPageContent } from "./analysis-content";
 import { Loader2 } from "lucide-react";

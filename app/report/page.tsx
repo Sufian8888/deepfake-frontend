@@ -1,5 +1,3 @@
-"use client";
-
 import { Suspense } from "react";
 import { ReportPageContent } from "./report-content";
 import { Loader2 } from "lucide-react";
