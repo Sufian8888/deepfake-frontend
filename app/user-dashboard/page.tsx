@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { ProtectedRoute } from "@/components/protected-route";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { UserStats } from "@/components/user-dashboard/user-stats";

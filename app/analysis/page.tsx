@@ -1,4 +1,7 @@
 import { Suspense } from "react";
+
+export const dynamic = "force-dynamic";
+
 import { AnalysisPageContent } from "./analysis-content";
 import { Loader2 } from "lucide-react";
 
