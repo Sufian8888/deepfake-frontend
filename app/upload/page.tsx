@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebar } from "@/components/ui/app-sidebar";
@@ -41,7 +43,9 @@ export default function UploadPage() {
     try {
       // Upload the file to backend
       const response = await uploadAPI.uploadVideo(file);
-      setUploadedVideoId(response.id);
+      if (response && typeof response === 'object' && 'id' in response) {
+        setUploadedVideoId((response as { id: number }).id);
+      }
       toast({
         title: "Success",
         description: "Video uploaded successfully",
