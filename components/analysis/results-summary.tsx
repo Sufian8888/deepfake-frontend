@@ -16,38 +16,39 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
     )
   }
 
-  const overallScore = Math.round(analysisData.confidence_score || 0)
-  const isDeepfake = analysisData.is_deepfake
-  const verdict = isDeepfake ? "LIKELY FAKE" : "LIKELY REAL"
-  const verdictColor = isDeepfake ? "text-destructive" : "text-green-500"
-  const verdictBg = isDeepfake ? "bg-destructive/20" : "bg-green-500/20"
+  try {
+    const overallScore = Math.round(analysisData.confidence_score || 0)
+    const isDeepfake = analysisData.is_deepfake ?? false
+    const verdict = isDeepfake ? "LIKELY FAKE" : "LIKELY REAL"
+    const verdictColor = isDeepfake ? "text-destructive" : "text-green-500"
+    const verdictBg = isDeepfake ? "bg-destructive/20" : "bg-green-500/20"
 
-  const details = analysisData.analysis_details || {}
-  const keyFindings = []
+    const details = analysisData.analysis_details || {}
+    const keyFindings = []
 
-  // Generate findings from analysis details
-  if (details.facial_consistency !== undefined) {
-    const severity = details.facial_consistency < 50 ? "high" : details.facial_consistency < 70 ? "medium" : "low"
-    keyFindings.push({
-      label: `Facial consistency: ${details.facial_consistency?.toFixed(1)}%`,
-      severity
-    })
-  }
+    // Generate findings from analysis details
+    if (typeof details.facial_consistency === 'number') {
+      const severity = details.facial_consistency < 50 ? "high" : details.facial_consistency < 70 ? "medium" : "low"
+      keyFindings.push({
+        label: `Facial consistency: ${details.facial_consistency?.toFixed(1)}%`,
+        severity
+      })
+    }
 
-  if (details.audio_sync !== undefined) {
-    const severity = details.audio_sync < 50 ? "high" : details.audio_sync < 70 ? "medium" : "low"
-    keyFindings.push({
-      label: `Audio-visual sync: ${details.audio_sync?.toFixed(1)}%`,
-      severity
-    })
-  }
+    if (typeof details.audio_sync === 'number') {
+      const severity = details.audio_sync < 50 ? "high" : details.audio_sync < 70 ? "medium" : "low"
+      keyFindings.push({
+        label: `Audio-visual sync: ${details.audio_sync?.toFixed(1)}%`,
+        severity
+      })
+    }
 
-  if (details.artifacts_detected) {
-    keyFindings.push({
-      label: "Visual artifacts detected",
-      severity: "high"
-    })
-  }
+    if (details.artifacts_detected === true) {
+      keyFindings.push({
+        label: "Visual artifacts detected",
+        severity: "high"
+      })
+    }
 
   if (details.frame_analysis) {
     const { total_frames, suspicious_frames } = details.frame_analysis
@@ -118,5 +119,13 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
         </Button>
       </Link> */}
     </div>
-  )
+    )
+  } catch (err: any) {
+    console.error('ResultsSummary error:', err)
+    return (
+      <div className="glass rounded-2xl p-6 border border-border/50 border-destructive/50 bg-destructive/5">
+        <p className="text-destructive text-center">Error rendering analysis results: {err?.message || 'Unknown error'}</p>
+      </div>
+    )
+  }
 }
