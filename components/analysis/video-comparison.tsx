@@ -13,14 +13,15 @@ interface VideoComparisonProps {
 }
 
 export function VideoComparison({ videoData, analysisData }: VideoComparisonProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("side-by-side")
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [overlayOpacity, setOverlayOpacity] = useState(55)
+  try {
+    const [viewMode, setViewMode] = useState<ViewMode>("side-by-side")
+    const [isPlaying, setIsPlaying] = useState(false)
+    const [overlayOpacity, setOverlayOpacity] = useState(55)
 
-  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-  const rawModelUrl = process.env.NEXT_PUBLIC_MODEL_URL || "http://localhost:5000"
-  const normalizedApiUrl = rawApiUrl.replace(/\/$/, "")
-  const normalizedModelUrl = rawModelUrl.replace(/\/$/, "")
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+    const rawModelUrl = process.env.NEXT_PUBLIC_MODEL_URL || "http://localhost:5000"
+    const normalizedApiUrl = rawApiUrl.replace(/\/$/, "")
+    const normalizedModelUrl = rawModelUrl.replace(/\/$/, "")
 
   const filename = videoData?.filename as string | undefined
   const normalizedPath = filename
@@ -180,5 +181,13 @@ export function VideoComparison({ videoData, analysisData }: VideoComparisonProp
         </div>
       </div>
     </div>
-  )
+    )
+  } catch (err: any) {
+    console.error('VideoComparison error:', err)
+    return (
+      <div className="glass rounded-2xl p-6 border border-border/50 border-destructive/50 bg-destructive/5">
+        <p className="text-destructive text-center">Error rendering video comparison: {err?.message || 'Unknown error'}</p>
+      </div>
+    )
+  }
 }

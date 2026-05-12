@@ -50,75 +50,75 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
       })
     }
 
-  if (details.frame_analysis) {
-    const { total_frames, suspicious_frames } = details.frame_analysis
-    if (suspicious_frames > 0) {
-      keyFindings.push({
-        label: `${suspicious_frames} of ${total_frames} frames flagged`,
-        severity: suspicious_frames > total_frames * 0.5 ? "high" : "medium"
-      })
+    if (details.frame_analysis) {
+      const { total_frames, suspicious_frames } = details.frame_analysis
+      if (suspicious_frames > 0) {
+        keyFindings.push({
+          label: `${suspicious_frames} of ${total_frames} frames flagged`,
+          severity: suspicious_frames > total_frames * 0.5 ? "high" : "medium"
+        })
+      }
     }
-  }
 
-  // Add suggestions as findings if available
-  if (analysisData.suggestions && analysisData.suggestions.length > 0) {
-    keyFindings.push(...analysisData.suggestions.slice(0, 2).map((s: string) => ({
-      label: s.replace(/[⚠️🔍📊🚨✅💡📈✔️]/g, '').trim(),
-      severity: isDeepfake ? "high" : "low"
-    })))
-  }
+    // Add suggestions as findings if available
+    if (analysisData.suggestions && analysisData.suggestions.length > 0) {
+      keyFindings.push(...analysisData.suggestions.slice(0, 2).map((s: string) => ({
+        label: s.replace(/[⚠️🔍📊🚨✅💡📈✔️]/g, '').trim(),
+        severity: isDeepfake ? "high" : "low"
+      })))
+    }
 
-  return (
-    <div className="glass rounded-2xl p-6 border border-border/50">
-      <h2 className="text-xl font-semibold mb-6">Analysis Summary</h2>
+    return (
+      <div className="glass rounded-2xl p-6 border border-border/50">
+        <h2 className="text-xl font-semibold mb-6">Analysis Summary</h2>
 
-      <div className={`rounded-xl p-6 ${verdictBg} mb-6`}>
-        <div className="flex items-center gap-4">
-          {isDeepfake ? (
-            <XCircle className="h-12 w-12 text-destructive" />
-          ) : (
-            <CheckCircle className="h-12 w-12 text-green-500" />
-          )}
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Verification Result</p>
-            <p className={`text-2xl font-bold ${verdictColor}`}>{verdict}</p>
-          </div>
-          <div className="ml-auto text-right">
-            <p className="text-sm text-muted-foreground mb-1">Confidence</p>
-            <p className={`text-3xl font-bold font-mono ${verdictColor}`}>{overallScore}%</p>
+        <div className={`rounded-xl p-6 ${verdictBg} mb-6`}>
+          <div className="flex items-center gap-4">
+            {isDeepfake ? (
+              <XCircle className="h-12 w-12 text-destructive" />
+            ) : (
+              <CheckCircle className="h-12 w-12 text-green-500" />
+            )}
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Verification Result</p>
+              <p className={`text-2xl font-bold ${verdictColor}`}>{verdict}</p>
+            </div>
+            <div className="ml-auto text-right">
+              <p className="text-sm text-muted-foreground mb-1">Confidence</p>
+              <p className={`text-3xl font-bold font-mono ${verdictColor}`}>{overallScore}%</p>
+            </div>
           </div>
         </div>
+
+        {keyFindings.length > 0 && (
+          <div className="space-y-4 mb-6">
+            <h3 className="font-medium">Key Findings</h3>
+            <div className="space-y-2">
+              {keyFindings.map((finding, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/50">
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      finding.severity === "high"
+                        ? "bg-destructive"
+                        : finding.severity === "medium"
+                          ? "bg-yellow-500"
+                          : "bg-blue-500"
+                    }`}
+                  />
+                  <span className="text-sm">{finding.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* <Link href={`/report?videoId=${videoId}`}>
+          <Button className="w-full glow-blue">
+            View Full Report
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link> */}
       </div>
-
-      {keyFindings.length > 0 && (
-        <div className="space-y-4 mb-6">
-          <h3 className="font-medium">Key Findings</h3>
-          <div className="space-y-2">
-            {keyFindings.map((finding, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/50">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    finding.severity === "high"
-                      ? "bg-destructive"
-                      : finding.severity === "medium"
-                        ? "bg-yellow-500"
-                        : "bg-blue-500"
-                  }`}
-                />
-                <span className="text-sm">{finding.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* <Link href={`/report?videoId=${videoId}`}>
-        <Button className="w-full glow-blue">
-          View Full Report
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </Link> */}
-    </div>
     )
   } catch (err: any) {
     console.error('ResultsSummary error:', err)

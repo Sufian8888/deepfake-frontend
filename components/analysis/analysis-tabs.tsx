@@ -10,13 +10,14 @@ interface AnalysisTabsProps {
 }
 
 export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
-  if (!analysisData || !analysisData.analysis_details) {
-    return (
-      <div className="glass rounded-2xl p-6 border border-border/50">
-        <p className="text-muted-foreground text-center">No analysis data available</p>
-      </div>
-    );
-  }
+  try {
+    if (!analysisData || !analysisData.analysis_details) {
+      return (
+        <div className="glass rounded-2xl p-6 border border-border/50">
+          <p className="text-muted-foreground text-center">No analysis data available</p>
+        </div>
+      );
+    }
 
   const details = analysisData.analysis_details;
   const frameAnalysis = details.frame_analysis || {};
@@ -209,4 +210,12 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
       </Card>
     </div>
   );
+  } catch (err: any) {
+    console.error('AnalysisTabs error:', err)
+    return (
+      <div className="glass rounded-2xl p-6 border border-border/50 border-destructive/50 bg-destructive/5">
+        <p className="text-destructive text-center">Error rendering analysis tabs: {err?.message || 'Unknown error'}</p>
+      </div>
+    )
+  }
 }

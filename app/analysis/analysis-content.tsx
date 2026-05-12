@@ -103,8 +103,17 @@ export function AnalysisPageContent() {
         <main className="flex-1 overflow-auto">
           <div className="container mx-auto py-8 px-4 space-y-8">
             <ResultsSummary analysisData={analysisData} videoId={videoId} />
-            <VideoComparison videoData={videoData} analysisData={analysisData} />
-            <AnalysisTabs analysisData={analysisData} />
+            {videoData && analysisData && (
+              <>
+                <VideoComparison videoData={videoData} analysisData={analysisData} />
+                <AnalysisTabs analysisData={analysisData} />
+              </>
+            )}
+            {(!videoData || !analysisData) && (
+              <div className="text-center text-muted-foreground">
+                <p>Some analysis components could not load. Please refresh the page.</p>
+              </div>
+            )}
           </div>
         </main>
       </div>
