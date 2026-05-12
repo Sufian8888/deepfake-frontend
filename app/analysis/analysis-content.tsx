@@ -49,6 +49,8 @@ export function AnalysisPageContent() {
         // Check if analysis is completed
         if (video.status === "completed") {
           const result = await predictionsAPI.getResult(id);
+          console.log("🔍 DEBUG: Full analysis result:", result);
+          console.log("🔍 DEBUG: Annotated frames:", result?.analysis_details?.annotated_frames);
           setAnalysisData(result);
         } else {
           setError(`Analysis is ${video.status}. Please wait for completion.`);
