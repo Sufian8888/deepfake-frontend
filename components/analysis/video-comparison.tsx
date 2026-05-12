@@ -33,26 +33,9 @@ export function VideoComparison({ videoData, analysisData }: VideoComparisonProp
   const videoSrc = normalizedPath ? `${normalizedApiUrl}${normalizedPath}` : null
 
   const annotatedFrames = analysisData?.analysis_details?.annotated_frames || []
-
-  const heatmapSrc = useMemo(() => {
-    if (!annotatedFrames.length) {
-      return null
-    }
-
-    const firstFramePath = String(annotatedFrames[0]).replace(/\\/g, "/").replace(/^\/+/, "")
-    const normalizedFramePath = firstFramePath
-      .replace(/^model\/analysis_results\//, "")
-      .replace(/^analysis_results\//, "")
-
-    return `${normalizedModelUrl}/model/analysis_results/${normalizedFramePath}`
-  }, [annotatedFrames, normalizedModelUrl])
-
-  const togglePlay = () => setIsPlaying((prev) => !prev)
-
-  return (
-    <div className="glass rounded-2xl p-6 border border-border/50">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <h2 className="text-xl font-semibold">Video Analysis</h2>
+    
+    // Check if we're in demo mode
+    const isDemoMode = analysisData?.analysis_details?.mode === "demo"
         <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
           <TabsList className="glass">
             <TabsTrigger value="side-by-side" className="gap-2">
@@ -88,6 +71,11 @@ export function VideoComparison({ videoData, analysisData }: VideoComparisonProp
             <div className="absolute inset-0 flex items-center justify-center">
               {heatmapSrc ? (
                 <img src={heatmapSrc} alt="Annotated frame heatmap" className="w-full h-full object-contain" />
+              ) : isDemoMode ? (
+                <div className="text-center">
+                  <p className="text-muted-foreground mb-2">Model still loading...</p>
+                  <p className="text-xs text-muted-foreground/70">Annotated frames will appear once model is ready</p>
+                </div>
               ) : (
                 <p className="text-muted-foreground">No annotated frame available</p>
               )}
