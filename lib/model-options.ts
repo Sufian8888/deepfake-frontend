@@ -12,5 +12,7 @@ export const FALLBACK_MODEL_OPTIONS: ModelOption[] = [
   { key: "e1-train-1", label: "e1-train-1.pth" },
   { key: "e2-train-1", label: "e2-train-1.pth" },
   { key: "e5-train-1", label: "e5-train-1.pth" },
+  { key: "deepfake_master_model", label: "deepfake_master_model.pth" },
+  { key: "deepfake_master_model(1)", label: "deepfake_master_model(1).pth" },
   { key: "folders_model_best", label: "folders_model_best.pth" },
 ];
