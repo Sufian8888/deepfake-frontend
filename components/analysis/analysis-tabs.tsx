@@ -3,7 +3,15 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle, Image as ImageIcon } from "lucide-react";
+import { AlertTriangle, CheckCircle, Image as ImageIcon, Flame } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface AnalysisTabsProps {
   analysisData?: any;
@@ -87,51 +95,74 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
         </div>
       </Card>
 
-      {/* Frame-by-Frame Details */}
+      {/* Frame-by-Frame Details Table */}
       {frameDetails.length > 0 && (
         <Card className="glass border-border/50 p-6">
-          <h2 className="text-xl font-semibold mb-4">Frame-by-Frame Analysis</h2>
+          <h2 className="text-xl font-semibold mb-4">Frame-by-Frame Breakdown</h2>
           
-          <div className="space-y-3">
-            {frameDetails.map((frame: any) => (
-              <div
-                key={frame.frame_num}
-                className={`p-4 rounded-lg border-2 ${
-                  frame.is_suspicious
-                    ? 'border-destructive/50 bg-destructive/5'
-                    : 'border-green-500/50 bg-green-500/5'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {frame.is_suspicious ? (
-                      <AlertTriangle className="h-5 w-5 text-destructive" />
-                    ) : (
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    )}
-                    <div>
-                      <p className="font-semibold">Frame {frame.frame_num ?? 0}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {(frame.faces_detected ?? 0)} face(s) detected
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge
-                      variant={frame.label === 'FAKE' ? 'destructive' : 'default'}
-                      className={frame.label === 'REAL' ? 'bg-green-500' : ''}
-                    >
-                      {frame.label}
-                    </Badge>
-                    <p className={`text-sm font-mono mt-1 ${
-                      frame.is_suspicious ? 'text-destructive' : 'text-green-500'
-                    }`}>
-                      {(frame.confidence ?? 0).toFixed(1)}%
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">#</TableHead>
+                  <TableHead>Verdict</TableHead>
+                  <TableHead>Class</TableHead>
+                  <TableHead>Confidence</TableHead>
+                  <TableHead className="w-32">Score</TableHead>
+                  <TableHead>Faces</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {frameDetails.map((frame: any, idx: number) => (
+                  <TableRow key={idx} className={frame.is_suspicious ? 'bg-destructive/5' : ''}>
+                    <TableCell className="font-mono font-semibold">
+                      {frame.frame_num ?? idx + 1}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {frame.is_suspicious ? (
+                          <>
+                            <AlertTriangle className="h-4 w-4 text-destructive" />
+                            <Badge variant="destructive">{frame.label || 'FAKE'}</Badge>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <Badge variant="outline" className="border-green-500 text-green-500">
+                              {frame.label || 'REAL'}
+                            </Badge>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">{frame.class || 'N/A'}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Progress 
+                          value={Math.min(100, Math.max(0, (frame.confidence ?? 0)))}
+                          className="h-2 w-24" 
+                        />
+                        <span className={`font-mono text-sm ${
+                          frame.is_suspicious ? 'text-destructive' : 'text-green-500'
+                        }`}>
+                          {(frame.confidence ?? 0).toFixed(1)}%
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {(frame.raw_score ?? frame.p_fake ?? frame.confidence ?? 0).toFixed(4)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {(frame.faces_detected ?? 0) > 0 ? (
+                        <Badge variant="outline">{frame.faces_detected}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </Card>
       )}

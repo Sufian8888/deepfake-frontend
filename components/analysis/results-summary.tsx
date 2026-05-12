@@ -1,5 +1,6 @@
-import { AlertTriangle, CheckCircle, XCircle, ArrowRight } from "lucide-react"
+import { AlertTriangle, CheckCircle, XCircle, ArrowRight, Film, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 
 interface ResultsSummaryProps {
@@ -69,55 +70,124 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
     }
 
     return (
-      <div className="glass rounded-2xl p-6 border border-border/50">
-        <h2 className="text-xl font-semibold mb-6">Analysis Summary</h2>
+      <div className="space-y-6">
+        {/* Verdict Card */}
+        <div className="glass rounded-2xl p-6 border border-border/50">
+          <h2 className="text-xl font-semibold mb-6">Analysis Summary</h2>
 
-        <div className={`rounded-xl p-6 ${verdictBg} mb-6`}>
-          <div className="flex items-center gap-4">
-            {isDeepfake ? (
-              <XCircle className="h-12 w-12 text-destructive" />
-            ) : (
-              <CheckCircle className="h-12 w-12 text-green-500" />
-            )}
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Verification Result</p>
-              <p className={`text-2xl font-bold ${verdictColor}`}>{verdict}</p>
-            </div>
-            <div className="ml-auto text-right">
-              <p className="text-sm text-muted-foreground mb-1">Confidence</p>
-              <p className={`text-3xl font-bold font-mono ${verdictColor}`}>{overallScore}%</p>
+          <div className={`rounded-xl p-6 ${verdictBg} mb-6`}>
+            <div className="flex items-center gap-4">
+              {isDeepfake ? (
+                <XCircle className="h-12 w-12 text-destructive" />
+              ) : (
+                <CheckCircle className="h-12 w-12 text-green-500" />
+              )}
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Verification Result</p>
+                <p className={`text-2xl font-bold ${verdictColor}`}>{verdict}</p>
+              </div>
+              <div className="ml-auto text-right">
+                <p className="text-sm text-muted-foreground mb-1">Confidence</p>
+                <p className={`text-3xl font-bold font-mono ${verdictColor}`}>{overallScore}%</p>
+              </div>
             </div>
           </div>
+
+          {/* Frame Statistics */}
+          {details.frame_analysis && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                <p className="text-xs text-muted-foreground mb-1">Total Frames</p>
+                <p className="text-2xl font-bold">{details.frame_analysis.total_frames || 0}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+                <p className="text-xs text-muted-foreground mb-1">Fake Detected</p>
+                <p className="text-2xl font-bold text-destructive">{details.frame_analysis.fake_frames || 0}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                <p className="text-xs text-muted-foreground mb-1">Real Detected</p>
+                <p className="text-2xl font-bold text-green-500">{details.frame_analysis.real_frames || 0}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                <p className="text-xs text-muted-foreground mb-1">Suspicious</p>
+                <p className="text-2xl font-bold text-yellow-500">{details.frame_analysis.suspicious_frames || 0}</p>
+              </div>
+            </div>
+          )}
+
+          {keyFindings.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="font-medium flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Key Findings
+              </h3>
+              <div className="space-y-2">
+                {keyFindings.map((finding, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/50">
+                    <div
+                      className={`w-2 h-2 rounded-full shrink-0 ${
+                        finding.severity === "high"
+                          ? "bg-destructive"
+                          : finding.severity === "medium"
+                            ? "bg-yellow-500"
+                            : "bg-blue-500"
+                      }`}
+                    />
+                    <span className="text-sm">{finding.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {keyFindings.length > 0 && (
-          <div className="space-y-4 mb-6">
-            <h3 className="font-medium">Key Findings</h3>
-            <div className="space-y-2">
-              {keyFindings.map((finding, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/50">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      finding.severity === "high"
-                        ? "bg-destructive"
-                        : finding.severity === "medium"
-                          ? "bg-yellow-500"
-                          : "bg-blue-500"
-                    }`}
-                  />
-                  <span className="text-sm">{finding.label}</span>
+        {/* Technical Details */}
+        {(details.facial_consistency !== undefined || details.temporal_consistency !== undefined) && (
+          <div className="glass rounded-2xl p-6 border border-border/50">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <Film className="h-4 w-4" />
+              Technical Metrics
+            </h3>
+            <div className="space-y-4">
+              {typeof details.facial_consistency === 'number' && (
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span>Facial Consistency</span>
+                    <span className="font-mono">{details.facial_consistency.toFixed(1)}%</span>
+                  </div>
+                  <div className="h-2 rounded bg-muted/30 overflow-hidden">
+                    <div 
+                      className="h-full bg-primary transition-all"
+                      style={{ width: `${Math.min(100, details.facial_consistency)}%` }}
+                    />
+                  </div>
                 </div>
-              ))}
+              )}
+              {typeof details.temporal_consistency === 'number' && (
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span>Temporal Consistency</span>
+                    <span className="font-mono">{details.temporal_consistency.toFixed(1)}%</span>
+                  </div>
+                  <div className="h-2 rounded bg-muted/30 overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-500 transition-all"
+                      style={{ width: `${Math.min(100, details.temporal_consistency)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              {details.artifacts_detected !== undefined && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <span>Artifacts Detected</span>
+                  <Badge variant={details.artifacts_detected ? 'destructive' : 'default'}>
+                    {details.artifacts_detected ? 'Yes' : 'No'}
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
         )}
-
-        {/* <Link href={`/report?videoId=${videoId}`}>
-          <Button className="w-full glow-blue">
-            View Full Report
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </Link> */}
       </div>
     )
   } catch (err: any) {
