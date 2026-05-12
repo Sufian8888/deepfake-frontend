@@ -110,9 +110,9 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
                       <CheckCircle className="h-5 w-5 text-green-500" />
                     )}
                     <div>
-                      <p className="font-semibold">Frame {frame.frame_num}</p>
+                      <p className="font-semibold">Frame {frame.frame_num ?? 0}</p>
                       <p className="text-sm text-muted-foreground">
-                        {frame.faces_detected} face(s) detected
+                        {(frame.faces_detected ?? 0)} face(s) detected
                       </p>
                     </div>
                   </div>
@@ -126,7 +126,7 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
                     <p className={`text-sm font-mono mt-1 ${
                       frame.is_suspicious ? 'text-destructive' : 'text-green-500'
                     }`}>
-                      {frame.confidence.toFixed(1)}%
+                      {(frame.confidence ?? 0).toFixed(1)}%
                     </p>
                   </div>
                 </div>
@@ -169,10 +169,10 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
           <div>
             <div className="flex justify-between text-sm mb-2">
               <span>Facial Consistency Score</span>
-              <span className="font-mono">{Math.round(details.facial_consistency || 0)}%</span>
+              <span className="font-mono">{Math.round((details.facial_consistency ?? 0))}%</span>
             </div>
             <Progress 
-              value={details.facial_consistency || 0} 
+              value={Math.min(100, Math.max(0, details.facial_consistency ?? 0))}
               className="h-2 [&>div]:bg-primary" 
             />
           </div>
@@ -184,7 +184,7 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
                 <span className="font-mono">{Math.round(details.temporal_consistency)}%</span>
               </div>
               <Progress 
-                value={details.temporal_consistency} 
+                value={Math.min(100, Math.max(0, details.temporal_consistency))}
                 className="h-2 [&>div]:bg-blue-500" 
               />
             </div>
