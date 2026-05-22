@@ -133,7 +133,7 @@ export function AnalysisPageContent() {
     <ProtectedRoute>
       <div className="flex h-screen bg-background">
         <AppSidebar />
-        <main className="flex-1 overflow-auto ml-64">
+        <main className="flex-1 overflow-auto ml-[var(--app-sidebar-width,16rem)]">
           <div className="container mx-auto py-8 px-4 space-y-8">
             <ResultsSummary analysisData={analysisData} videoId={videoId} />
             {videoData && analysisData && (

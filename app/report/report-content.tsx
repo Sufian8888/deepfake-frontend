@@ -56,7 +56,7 @@ export function ReportPageContent() {
       <ProtectedRoute>
         <div className="flex min-h-screen">
           <AppSidebar />
-          <main className="flex-1 ml-64 p-8 flex items-center justify-center">
+          <main className="flex-1 ml-[var(--app-sidebar-width,16rem)] p-8 flex items-center justify-center">
             <div className="text-center">
               <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
               <p className="text-muted-foreground">Loading report...</p>
@@ -72,7 +72,7 @@ export function ReportPageContent() {
       <ProtectedRoute>
         <div className="flex min-h-screen">
           <AppSidebar />
-          <main className="flex-1 ml-64 p-8 flex items-center justify-center">
+          <main className="flex-1 ml-[var(--app-sidebar-width,16rem)] p-8 flex items-center justify-center">
             <div className="text-center">
               <p className="text-destructive mb-4">{error}</p>
               <a href="/user-dashboard" className="text-primary hover:underline">
@@ -96,7 +96,7 @@ export function ReportPageContent() {
       <div className="flex min-h-screen">
         <AppSidebar />
 
-        <main className="flex-1 ml-64 p-8">
+        <main className="flex-1 ml-[var(--app-sidebar-width,16rem)] p-8">
           <div className="max-w-7xl mx-auto space-y-6">
             <ReportHeader videoData={videoData} />
 

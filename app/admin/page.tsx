@@ -46,7 +46,7 @@ export default function AdminPage() {
     <div className="flex min-h-screen">
       <AppSidebar />
 
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 ml-[var(--app-sidebar-width,16rem)] p-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
