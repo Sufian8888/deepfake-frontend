@@ -135,7 +135,7 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{frame.class || 'N/A'}</TableCell>
+                    <TableCell className="font-mono text-sm">{frame.pred_class || frame.class || 'N/A'}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Progress 
