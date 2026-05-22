@@ -1,6 +1,14 @@
 import { Brain, Lightbulb } from "lucide-react"
 
-export function ExplanationSummary() {
+interface ExplanationSummaryProps {
+  analysisData?: any
+}
+
+export function ExplanationSummary({ analysisData }: ExplanationSummaryProps) {
+  const reportSummary = analysisData?.report_summary || analysisData?.analysis_details?.report_summary || {}
+  const finalLabel = reportSummary.final_label || (analysisData?.is_deepfake ? "FAKE" : "REAL")
+  const avgProbFake = typeof reportSummary.avg_prob_fake === "number" ? reportSummary.avg_prob_fake : null
+
   return (
     <div className="glass rounded-2xl p-6 border border-border/50">
       <div className="flex items-center gap-3 mb-4">
@@ -12,9 +20,9 @@ export function ExplanationSummary() {
 
       <div className="space-y-4">
         <p className="text-muted-foreground leading-relaxed">
-          The analyzed video exhibits multiple indicators of synthetic manipulation consistent with deepfake generation
-          techniques. The primary evidence includes significant audio-visual desynchronization, particularly during
-          speech segments between 0:09-0:15 and 0:30-0:33.
+          {finalLabel === "FAKE"
+            ? "The analyzed video exhibits multiple indicators of synthetic manipulation consistent with deepfake generation techniques. The model flagged several frames as suspicious and the overlay heatmaps highlight regions the model relied on most."
+            : "The analyzed video does not show strong manipulation signals in the model summary. The model produced a real verdict with no dominant deepfake pattern in the sampled frames."}
         </p>
 
         <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
@@ -23,18 +31,18 @@ export function ExplanationSummary() {
             <div>
               <p className="font-medium mb-1">Key Insight</p>
               <p className="text-sm text-muted-foreground">
-                The facial boundary analysis revealed characteristic blending artifacts that occur when a face-swap
-                algorithm attempts to merge synthetic facial features with the original head pose and lighting
-                conditions. These artifacts are particularly visible around the jawline and hairline regions.
+                {avgProbFake !== null
+                  ? `Average fake probability across sampled frames is ${(avgProbFake * 100).toFixed(1)}%, which matches the final report summary.`
+                  : "The report summary is based on the model output and annotated frame evidence from the backend."}
               </p>
             </div>
           </div>
         </div>
 
         <p className="text-muted-foreground leading-relaxed">
-          Additionally, temporal analysis detected optical flow inconsistencies suggesting frame interpolation or
-          manipulation. The compression analysis revealed unusual JPEG grid alignment patterns that may indicate
-          post-processing or re-encoding of the manipulated content.
+          {finalLabel === "FAKE"
+            ? "Additionally, the sampled frames and attention overlays indicate repeated model focus on regions associated with manipulation."
+            : "Additionally, the sampled frames remain consistent with the model's real verdict and do not show a dominant anomaly pattern."}
         </p>
       </div>
     </div>

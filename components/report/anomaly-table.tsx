@@ -1,5 +1,9 @@
 import { AlertTriangle, AlertCircle, Info } from "lucide-react"
 
+interface AnomalyTableProps {
+  analysisData?: any
+}
+
 const anomalies = [
   {
     id: 1,
@@ -43,7 +47,7 @@ const anomalies = [
   },
 ]
 
-export function AnomalyTable() {
+export function AnomalyTable({ analysisData }: AnomalyTableProps) {
   return (
     <div className="glass rounded-2xl p-6 border border-border/50">
       <h3 className="text-lg font-semibold mb-4">Detected Anomalies</h3>

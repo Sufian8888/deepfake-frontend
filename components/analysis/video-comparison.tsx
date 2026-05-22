@@ -13,7 +13,7 @@ interface VideoComparisonProps {
 }
 
 export function VideoComparison({ videoData, analysisData }: VideoComparisonProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("side-by-side")
+  const [viewMode, setViewMode] = useState<ViewMode>("compare")
   const [isPlaying, setIsPlaying] = useState(false)
   const [overlayOpacity, setOverlayOpacity] = useState(55)
 

@@ -110,7 +110,7 @@ export function ReportPageContent() {
               <ExplanationSummary analysisData={analysisData} />
             </div>
 
-            <HeatmapGrid analysisData={analysisData} />
+            <HeatmapGrid analysisData={analysisData} videoData={videoData} />
             <AudioSyncChart analysisData={analysisData} />
             <AnomalyTable analysisData={analysisData} />
           </div>

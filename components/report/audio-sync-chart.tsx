@@ -2,6 +2,10 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, ReferenceLine } from "recharts"
 
+interface AudioSyncChartProps {
+  analysisData?: any
+}
+
 const data = [
   { time: "0:00", audio: 0.2, lip: 0.25 },
   { time: "0:03", audio: 0.8, lip: 0.7 },
@@ -17,7 +21,7 @@ const data = [
   { time: "0:33", audio: 0.35, lip: 0.4 },
 ]
 
-export function AudioSyncChart() {
+export function AudioSyncChart({ analysisData }: AudioSyncChartProps) {
   return (
     <div className="glass rounded-2xl p-6 border border-border/50">
       <h3 className="text-lg font-semibold mb-4">Audio vs Lip Movement Alignment</h3>

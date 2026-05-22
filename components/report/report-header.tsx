@@ -1,7 +1,11 @@
 import { FileText, Download, Printer, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export function ReportHeader() {
+interface ReportHeaderProps {
+  videoData?: any
+}
+
+export function ReportHeader({ videoData }: ReportHeaderProps) {
   return (
     <div className="glass rounded-2xl p-6 border border-border/50">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -11,7 +15,9 @@ export function ReportHeader() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Authenticity Verification Report</h1>
-            <p className="text-sm text-muted-foreground">Generated on December 5, 2024 at 14:32 UTC</p>
+            <p className="text-sm text-muted-foreground">
+              {videoData?.original_filename ? `Analyzing ${videoData.original_filename}` : "Generated on December 5, 2024 at 14:32 UTC"}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
