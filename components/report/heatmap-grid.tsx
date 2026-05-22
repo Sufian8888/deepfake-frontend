@@ -9,6 +9,7 @@ export function HeatmapGrid({ analysisData, videoData }: HeatmapGridProps) {
   const annotatedFrames = analysisData?.analysis_details?.annotated_frames || []
   const frameDetails = analysisData?.analysis_details?.frame_analysis?.frame_details || []
   const previewFrames = annotatedFrames.slice(0, 8)
+  const suspiciousFrames = frameDetails.filter((frame: any) => frame?.is_suspicious || frame?.label === "FAKE")
   const rawModelUrl = process.env.NEXT_PUBLIC_MODEL_URL || "http://localhost:5000"
   const normalizedModelUrl = rawModelUrl.replace(/\/$/, "")
 
@@ -23,31 +24,51 @@ export function HeatmapGrid({ analysisData, videoData }: HeatmapGridProps) {
 
   return (
     <div className="space-y-6">
-      <div className="glass rounded-2xl p-6 border border-border/50">
-        <div className="flex flex-col gap-2 mb-4">
-          <h3 className="text-lg font-semibold">Heatmap Evidence</h3>
-          <p className="text-sm text-muted-foreground">
-            The large panel below is the model heatmap view. It shows where the network focused, and the gallery below shows the same analysis on individual frames.
-          </p>
+      <div className="glass rounded-2xl p-6 border border-border/50 shadow-2xl shadow-primary/10">
+        <div className="flex flex-col gap-3 mb-5">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+            <div>
+              <h3 className="text-2xl font-semibold">Heatmap Evidence</h3>
+              <p className="text-sm text-muted-foreground max-w-3xl">
+                This section mirrors the local attention view: a large comparison panel on top and a frame-by-frame heatmap strip below.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <span className="px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                {previewFrames.length} highlighted frames
+              </span>
+              <span className="px-3 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                {suspiciousFrames.length} suspicious peaks
+              </span>
+            </div>
+          </div>
         </div>
 
         <VideoComparison videoData={videoData} analysisData={analysisData} size="large" />
       </div>
 
       {previewFrames.length > 0 && (
-        <div className="glass rounded-2xl p-6 border border-border/50">
-          <h3 className="text-lg font-semibold mb-4">Annotated Frame Gallery</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="glass rounded-2xl p-6 border border-border/50 shadow-xl shadow-black/10">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold">Frame Heatmap Strip</h3>
+              <p className="text-sm text-muted-foreground">
+                Individual annotated frames with the model confidence and suspicion markers.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {previewFrames.map((framePath: string, index: number) => {
               const frameMeta = frameDetails[index] || {}
               const frameLabel = frameMeta.label || (frameMeta.is_suspicious ? "FAKE" : "REAL")
 
               return (
-                <div key={index} className="relative rounded-xl overflow-hidden border border-border/50 bg-black/40 shadow-lg">
+                <div key={index} className="relative rounded-xl overflow-hidden border border-border/50 bg-black/40 shadow-lg ring-1 ring-primary/10">
                   <img
                     src={resolveAnnotatedFrameUrl(framePath)}
                     alt={`Annotated frame ${index + 1}`}
-                    className="w-full h-auto object-cover"
+                    className="w-full h-64 object-cover"
                   />
                   <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/70 text-[11px] text-white font-medium">
                     Frame {frameMeta.frame_num ?? index + 1}

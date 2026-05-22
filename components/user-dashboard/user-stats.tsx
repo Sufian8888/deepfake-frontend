@@ -20,18 +20,39 @@ export function UserStats() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
     const fetchStats = async () => {
       try {
         const data = await dashboardAPI.getStats()
-        setStats(data)
+        if (isMounted) {
+          setStats(data)
+          if (data?.pending_analyses > 0 && !intervalId) {
+            intervalId = setInterval(fetchStats, 5000)
+          }
+          if (data?.pending_analyses === 0 && intervalId) {
+            clearInterval(intervalId)
+            intervalId = null
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch user stats:', error)
       } finally {
-        setIsLoading(false)
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     }
 
     fetchStats()
+
+    return () => {
+      isMounted = false
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
   }, [])
 
   if (isLoading) {

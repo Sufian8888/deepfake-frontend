@@ -50,7 +50,45 @@ export function UserVideos() {
   const router = useRouter()
 
   useEffect(() => {
-    fetchVideos()
+    let isMounted = true
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
+    const refreshVideos = async () => {
+      try {
+        const data = await uploadAPI.listFiles()
+        if (!isMounted) return
+
+        setVideos(data)
+
+        const hasProcessing = Array.isArray(data) && data.some((video: VideoData) => video.status === 'processing' || video.status === 'pending')
+        if (hasProcessing && !intervalId) {
+          intervalId = setInterval(refreshVideos, 5000)
+        }
+        if (!hasProcessing && intervalId) {
+          clearInterval(intervalId)
+          intervalId = null
+        }
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch videos',
+          variant: 'destructive',
+        })
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    refreshVideos()
+
+    return () => {
+      isMounted = false
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
   }, [])
 
   const fetchVideos = async () => {
@@ -97,8 +135,8 @@ export function UserVideos() {
         title: 'Analysis Started',
         description: 'Your video is being analyzed',
       })
-      // Refresh the list after a short delay
       setTimeout(fetchVideos, 1000)
+      setTimeout(fetchVideos, 6000)
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -242,6 +280,12 @@ export function UserVideos() {
                           >
                             <Eye className="h-3 w-3 mr-1" />
                             View Analysis
+                          </Button>
+                        )}
+                        {video.status === 'processing' && (
+                          <Button size="sm" variant="outline" disabled className="border-blue-500/50 text-blue-500 bg-blue-500/10">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Processing...
                           </Button>
                         )}
                         <Button

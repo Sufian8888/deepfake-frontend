@@ -29,18 +29,40 @@ export function RecentActivity() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
     const fetchActivity = async () => {
       try {
         const data = await dashboardAPI.getRecentActivity();
-        setActivities(data);
+        if (!isMounted) return
+
+        setActivities(data)
+        const hasAnalysis = Array.isArray(data) && data.some((item) => item.type === 'analysis' || item.type === 'result')
+        if (hasAnalysis && !intervalId) {
+          intervalId = setInterval(fetchActivity, 5000)
+        }
+        if (!hasAnalysis && intervalId) {
+          clearInterval(intervalId)
+          intervalId = null
+        }
       } catch (error) {
         console.error("Failed to fetch recent activity:", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     };
 
     fetchActivity();
+
+    return () => {
+      isMounted = false
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
   }, []);
 
   const getActivityIcon = (type: string, isDeepfake?: boolean) => {
