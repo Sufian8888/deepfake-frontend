@@ -25,13 +25,13 @@ export function HeatmapGrid({ analysisData, videoData }: HeatmapGridProps) {
     <div className="space-y-6">
       <div className="glass rounded-2xl p-6 border border-border/50">
         <div className="flex flex-col gap-2 mb-4">
-          <h3 className="text-lg font-semibold">Visual Evidence</h3>
+          <h3 className="text-lg font-semibold">Heatmap Evidence</h3>
           <p className="text-sm text-muted-foreground">
-            Heatmap overlay for model attention and annotated frames for face-level evidence.
+            The large panel below is the model heatmap view. It shows where the network focused, and the gallery below shows the same analysis on individual frames.
           </p>
         </div>
 
-        <VideoComparison videoData={videoData} analysisData={analysisData} />
+        <VideoComparison videoData={videoData} analysisData={analysisData} size="large" />
       </div>
 
       {previewFrames.length > 0 && (
@@ -43,7 +43,7 @@ export function HeatmapGrid({ analysisData, videoData }: HeatmapGridProps) {
               const frameLabel = frameMeta.label || (frameMeta.is_suspicious ? "FAKE" : "REAL")
 
               return (
-                <div key={index} className="relative rounded-xl overflow-hidden border border-border/50 bg-black/40">
+                <div key={index} className="relative rounded-xl overflow-hidden border border-border/50 bg-black/40 shadow-lg">
                   <img
                     src={resolveAnnotatedFrameUrl(framePath)}
                     alt={`Annotated frame ${index + 1}`}

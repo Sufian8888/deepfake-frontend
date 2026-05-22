@@ -10,9 +10,10 @@ type ViewMode = "side-by-side" | "overlay" | "compare"
 interface VideoComparisonProps {
   videoData?: any
   analysisData?: any
+  size?: "default" | "large"
 }
 
-export function VideoComparison({ videoData, analysisData }: VideoComparisonProps) {
+export function VideoComparison({ videoData, analysisData, size = "default" }: VideoComparisonProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("compare")
   const [isPlaying, setIsPlaying] = useState(false)
   const [overlayOpacity, setOverlayOpacity] = useState(55)
@@ -48,6 +49,9 @@ export function VideoComparison({ videoData, analysisData }: VideoComparisonProp
   }, [annotatedFrames, normalizedModelUrl])
 
   const togglePlay = () => setIsPlaying((prev) => !prev)
+  const frameClassName = size === "large" ? "relative rounded-xl overflow-hidden bg-black/50 border border-border/50 min-h-[28rem] lg:min-h-[34rem]" : "relative aspect-video rounded-xl overflow-hidden bg-black/50 border border-border/50"
+  const heatmapFrameClassName = size === "large" ? "relative rounded-xl overflow-hidden bg-black/50 border border-primary/50 glow-blue min-h-[28rem] lg:min-h-[34rem]" : "relative aspect-video rounded-xl overflow-hidden bg-black/50 border border-primary/50 glow-blue"
+  const overlayFrameClassName = size === "large" ? "relative rounded-xl overflow-hidden bg-black/50 border border-primary/40 min-h-[28rem] lg:min-h-[34rem]" : "relative aspect-video rounded-xl overflow-hidden bg-black/50 border border-primary/40"
 
   try {
     return (
@@ -73,7 +77,7 @@ export function VideoComparison({ videoData, analysisData }: VideoComparisonProp
         </div>
 
         <div className={`grid gap-4 ${viewMode === "side-by-side" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
-          <div className="relative aspect-video rounded-xl overflow-hidden bg-black/50 border border-border/50">
+          <div className={frameClassName}>
             <div className="absolute inset-0 flex items-center justify-center">
               {videoSrc ? (
                 <video src={videoSrc} className="w-full h-full object-contain" controls />
@@ -85,7 +89,7 @@ export function VideoComparison({ videoData, analysisData }: VideoComparisonProp
           </div>
 
           {viewMode === "side-by-side" && (
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-black/50 border border-primary/50 glow-blue">
+            <div className={heatmapFrameClassName}>
               <div className="absolute inset-0 flex items-center justify-center">
                 {heatmapSrc ? (
                   <img src={heatmapSrc} alt="Annotated frame heatmap" className="w-full h-full object-contain" />
@@ -106,7 +110,7 @@ export function VideoComparison({ videoData, analysisData }: VideoComparisonProp
           )}
 
           {viewMode === "overlay" && (
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-black/50 border border-primary/40">
+            <div className={overlayFrameClassName}>
               <div className="absolute inset-0 flex items-center justify-center">
                 {videoSrc ? (
                   <video src={videoSrc} className="w-full h-full object-contain" controls />
@@ -140,7 +144,7 @@ export function VideoComparison({ videoData, analysisData }: VideoComparisonProp
           )}
 
           {viewMode === "compare" && (
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-black/50 border border-primary/40">
+            <div className={overlayFrameClassName}>
               <div className="absolute inset-0 flex items-center justify-center">
                 {videoSrc ? (
                   <video src={videoSrc} className="w-full h-full object-contain" controls />
