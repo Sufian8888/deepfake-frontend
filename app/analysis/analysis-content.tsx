@@ -29,11 +29,42 @@ export function AnalysisPageContent() {
       if (idFromUrl) {
         setVideoId(idFromUrl);
       } else {
-        setError("No video ID provided");
-        setIsLoading(false);
+        // If no videoId, fetch latest analysis
+        fetchLatestAnalysis();
       }
     }
   }, [videoIdParam]);
+
+  // Fetch latest analysis when no videoId provided
+  const fetchLatestAnalysis = async () => {
+    try {
+      // use `listFiles` (existing API) instead of non-existent `getFiles`
+      const videos = await uploadAPI.listFiles();
+      if (videos.length === 0) {
+        setError("No videos found");
+        setIsLoading(false);
+        return;
+      }
+
+      // Get most recent completed analysis
+      const completedVideos = videos.filter((v: any) => v.status === "completed").sort((a: any, b: any) => {
+        const timeA = new Date(a.created_at || 0).getTime();
+        const timeB = new Date(b.created_at || 0).getTime();
+        return timeB - timeA; // Most recent first
+      });
+
+      if (completedVideos.length === 0) {
+        setError("No completed analyses found");
+        setIsLoading(false);
+        return;
+      }
+
+      setVideoId(completedVideos[0].id.toString());
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch latest analysis");
+      setIsLoading(false);
+    }
+  };
 
   // Second effect: fetch data once videoId is available
   useEffect(() => {
@@ -102,7 +133,7 @@ export function AnalysisPageContent() {
     <ProtectedRoute>
       <div className="flex h-screen bg-background">
         <AppSidebar />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto ml-64">
           <div className="container mx-auto py-8 px-4 space-y-8">
             <ResultsSummary analysisData={analysisData} videoId={videoId} />
             {videoData && analysisData && (
