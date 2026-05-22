@@ -85,9 +85,11 @@ export function ReportPageContent() {
     );
   }
 
-  const score = Math.round(analysisData?.confidence_score || 0);
-  const isDeepfake = analysisData?.is_deepfake || false;
-  const confidence = isDeepfake ? score : 100 - score;
+  const reportSummary = analysisData?.report_summary || analysisData?.analysis_details?.report_summary || {};
+  const finalLabel = reportSummary.final_label || (analysisData?.is_deepfake ? "FAKE" : "REAL");
+  const finalConfidence = Math.round(reportSummary.final_confidence ?? analysisData?.confidence_score ?? 0);
+  const avgProbFake = typeof reportSummary.avg_prob_fake === "number" ? reportSummary.avg_prob_fake : null;
+  const isDeepfake = finalLabel === "FAKE";
 
   return (
     <ProtectedRoute>
@@ -100,9 +102,10 @@ export function ReportPageContent() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <VerdictCard 
-                score={score} 
-                confidence={confidence}
-                isDeepfake={isDeepfake}
+                finalLabel={finalLabel}
+                finalConfidence={finalConfidence}
+                avgProbFake={avgProbFake}
+                fallbackIsDeepfake={isDeepfake}
               />
               <ExplanationSummary analysisData={analysisData} />
             </div>

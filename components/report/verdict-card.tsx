@@ -1,15 +1,26 @@
 import { XCircle, AlertTriangle, CheckCircle } from "lucide-react"
 
 interface VerdictCardProps {
-  score: number
-  confidence: number
+  finalLabel?: string | null
+  finalConfidence?: number | null
+  avgProbFake?: number | null
+  fallbackIsDeepfake?: boolean
 }
 
-export function VerdictCard({ score = 73, confidence = 89 }: VerdictCardProps) {
-  const verdict = score > 70 ? "FAKE" : score > 40 ? "SUSPICIOUS" : "REAL"
-  const verdictColor = score > 70 ? "text-destructive" : score > 40 ? "text-yellow-500" : "text-green-500"
-  const verdictBg = score > 70 ? "bg-destructive/10" : score > 40 ? "bg-yellow-500/10" : "bg-green-500/10"
-  const Icon = score > 70 ? XCircle : score > 40 ? AlertTriangle : CheckCircle
+export function VerdictCard({
+  finalLabel,
+  finalConfidence,
+  avgProbFake,
+  fallbackIsDeepfake = false,
+}: VerdictCardProps) {
+  const verdict = (finalLabel || (fallbackIsDeepfake ? "FAKE" : "REAL")).toUpperCase()
+  const isFake = verdict === "FAKE"
+  const isSuspicious = verdict === "SUSPICIOUS"
+  const verdictColor = isFake ? "text-destructive" : isSuspicious ? "text-yellow-500" : "text-green-500"
+  const verdictBg = isFake ? "bg-destructive/10" : isSuspicious ? "bg-yellow-500/10" : "bg-green-500/10"
+  const Icon = isFake ? XCircle : isSuspicious ? AlertTriangle : CheckCircle
+  const displayConfidence = Math.round(finalConfidence ?? 0)
+  const displayAvgProbFake = typeof avgProbFake === "number" ? avgProbFake : null
 
   return (
     <div className={`glass rounded-2xl p-8 border border-border/50 ${verdictBg}`}>
@@ -19,13 +30,13 @@ export function VerdictCard({ score = 73, confidence = 89 }: VerdictCardProps) {
         <h2 className={`text-4xl font-bold mb-4 ${verdictColor}`}>{verdict}</h2>
         <div className="flex items-center justify-center gap-8">
           <div>
-            <p className="text-3xl font-bold font-mono">{score}%</p>
-            <p className="text-xs text-muted-foreground">Manipulation Score</p>
+            <p className="text-3xl font-bold font-mono">{displayConfidence}%</p>
+            <p className="text-xs text-muted-foreground">Final Confidence</p>
           </div>
           <div className="h-12 w-px bg-border" />
           <div>
-            <p className="text-3xl font-bold font-mono">{confidence}%</p>
-            <p className="text-xs text-muted-foreground">Confidence Level</p>
+            <p className="text-3xl font-bold font-mono">{displayAvgProbFake !== null ? `${(displayAvgProbFake * 100).toFixed(1)}%` : "-"}</p>
+            <p className="text-xs text-muted-foreground">Avg prob_fake</p>
           </div>
         </div>
       </div>

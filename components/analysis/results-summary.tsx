@@ -18,13 +18,17 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
   }
 
   try {
-    const overallScore = Math.round(analysisData.confidence_score || 0)
-    const isDeepfake = analysisData.is_deepfake ?? false
+    const reportSummary = analysisData.report_summary || analysisData.analysis_details?.report_summary || {}
+    const finalLabel = reportSummary.final_label || (analysisData.is_deepfake ? "FAKE" : "REAL")
+    const overallScore = Math.round(reportSummary.final_confidence ?? analysisData.confidence_score ?? 0)
+    const avgProbFake = typeof reportSummary.avg_prob_fake === 'number' ? reportSummary.avg_prob_fake : null
+    const isDeepfake = finalLabel === "FAKE"
     const verdict = isDeepfake ? "LIKELY FAKE" : "LIKELY REAL"
     const verdictColor = isDeepfake ? "text-destructive" : "text-green-500"
     const verdictBg = isDeepfake ? "bg-destructive/20" : "bg-green-500/20"
 
     const details = analysisData.analysis_details || {}
+    const frameAnalysis = details.frame_analysis || reportSummary.frame_breakdown || {}
     const keyFindings = []
 
     // Generate findings from analysis details
@@ -51,8 +55,8 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
       })
     }
 
-    if (details.frame_analysis) {
-      const { total_frames, suspicious_frames } = details.frame_analysis
+    if (frameAnalysis) {
+      const { total_frames, suspicious_frames } = frameAnalysis
       if (suspicious_frames > 0) {
         keyFindings.push({
           label: `${suspicious_frames} of ${total_frames} frames flagged`,
@@ -94,23 +98,32 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
           </div>
 
           {/* Frame Statistics */}
-          {details.frame_analysis && (
+          {frameAnalysis && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
                 <p className="text-xs text-muted-foreground mb-1">Total Frames</p>
-                <p className="text-2xl font-bold">{details.frame_analysis.total_frames || 0}</p>
+                <p className="text-2xl font-bold">{frameAnalysis.total_frames || 0}</p>
               </div>
               <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
                 <p className="text-xs text-muted-foreground mb-1">Fake Detected</p>
-                <p className="text-2xl font-bold text-destructive">{details.frame_analysis.fake_frames || 0}</p>
+                <p className="text-2xl font-bold text-destructive">{frameAnalysis.fake_frames || 0}</p>
               </div>
               <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
                 <p className="text-xs text-muted-foreground mb-1">Real Detected</p>
-                <p className="text-2xl font-bold text-green-500">{details.frame_analysis.real_frames || 0}</p>
+                <p className="text-2xl font-bold text-green-500">{frameAnalysis.real_frames || 0}</p>
               </div>
               <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
                 <p className="text-xs text-muted-foreground mb-1">Suspicious</p>
-                <p className="text-2xl font-bold text-yellow-500">{details.frame_analysis.suspicious_frames || 0}</p>
+                <p className="text-2xl font-bold text-yellow-500">{frameAnalysis.suspicious_frames || 0}</p>
+              </div>
+            </div>
+          )}
+
+          {avgProbFake !== null && (
+            <div className="mb-6 p-4 rounded-lg bg-muted/30 border border-border/50">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Average fake probability</span>
+                <span className="font-mono text-sm">{(avgProbFake * 100).toFixed(1)}%</span>
               </div>
             </div>
           )}

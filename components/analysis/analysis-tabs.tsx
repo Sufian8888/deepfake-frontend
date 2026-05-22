@@ -28,7 +28,7 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
     }
 
   const details = analysisData.analysis_details;
-  const frameAnalysis = details.frame_analysis || {};
+  const frameAnalysis = details.frame_analysis || analysisData.report_summary?.frame_breakdown || analysisData.analysis_details?.report_summary?.frame_breakdown || {};
   const frameDetails = frameAnalysis.frame_details || [];
   const annotatedFrames = details.annotated_frames || [];
   const rawModelUrl = process.env.NEXT_PUBLIC_MODEL_URL || "http://localhost:5000";
