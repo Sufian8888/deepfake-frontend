@@ -4,7 +4,9 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "@/components/ui/toaster";
+import { ChatbotManager } from "@/components/ChatbotManager";
 import "./globals.css";
+
 
 const _inter = Inter({ subsets: ["latin"] });
 const _jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
@@ -44,9 +46,11 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Toaster />
+          <ChatbotManager />
         </AuthProvider>
         <Analytics />
       </body>
     </html>
   );
+
 }
