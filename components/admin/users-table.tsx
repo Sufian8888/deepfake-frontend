@@ -15,6 +15,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -48,6 +55,20 @@ interface User {
   role: "admin" | "user";
   created_at: string;
   is_active?: boolean;
+  subscription_plan?: "free" | "pro" | "enterprise";
+  subscription_status?: string;
+  subscription_cycle?: "monthly" | "yearly";
+}
+
+function getPlanBadgeClass(plan?: string) {
+  switch (plan) {
+    case "pro":
+      return "border-cyan-500/50 bg-cyan-500/10 text-cyan-400";
+    case "enterprise":
+      return "border-violet-500/50 bg-violet-500/10 text-violet-400";
+    default:
+      return "border-muted-foreground/30 bg-muted/20 text-muted-foreground";
+  }
 }
 
 export function UsersTable() {
@@ -55,6 +76,7 @@ export function UsersTable() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [planFilter, setPlanFilter] = useState("all");
   const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
   const { toast } = useToast();
 
@@ -65,11 +87,12 @@ export function UsersTable() {
   useEffect(() => {
     const filtered = users.filter(
       (user) =>
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+        (user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.full_name.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (planFilter === "all" || (user.subscription_plan || "free") === planFilter)
     );
     setFilteredUsers(filtered);
-  }, [searchTerm, users]);
+  }, [planFilter, searchTerm, users]);
 
   const fetchUsers = async () => {
     try {
@@ -137,6 +160,17 @@ export function UsersTable() {
             User Management
           </CardTitle>
           <div className="flex items-center gap-2">
+            <Select value={planFilter} onValueChange={setPlanFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="All plans" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All plans</SelectItem>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+                <SelectItem value="enterprise">Enterprise</SelectItem>
+              </SelectContent>
+            </Select>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -163,6 +197,7 @@ export function UsersTable() {
                 <TableRow className="bg-muted/30">
                   <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Plan</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -172,7 +207,7 @@ export function UsersTable() {
                 {filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={6}
                       className="text-center text-muted-foreground py-8"
                     >
                       No users found
@@ -188,6 +223,12 @@ export function UsersTable() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {user.email}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={getPlanBadgeClass(user.subscription_plan)}>
+                          {(user.subscription_plan || "free").toUpperCase()}
+                          {user.subscription_status ? ` · ${user.subscription_status}` : ""}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge

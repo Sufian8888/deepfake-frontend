@@ -18,6 +18,16 @@ interface User {
   created_at: string;
 }
 
+function normalizeUser(user: any): User {
+  return {
+    id: user?.id,
+    email: user?.email,
+    full_name: user?.full_name ?? user?.username ?? user?.email ?? "",
+    role: user?.role ?? "user",
+    created_at: user?.created_at ?? "",
+  };
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -34,14 +44,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  const clearAuthStorage = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+  };
+
   // Load user from localStorage on mount
   useEffect(() => {
-    const loadUser = () => {
+    const loadUser = async () => {
       try {
+        const tokenPresent = typeof window !== "undefined" && localStorage.getItem("token");
+        if (tokenPresent) {
+          const serverUser = await authAPI.getMe();
+          const normalized = normalizeUser(serverUser);
+          setUser(normalized);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(normalized));
+          }
+          return;
+        }
+
         const currentUser = authAPI.getCurrentUser();
-        setUser(currentUser);
+        setUser(currentUser ? normalizeUser(currentUser) : null);
       } catch (error) {
-        console.error("Failed to load user:", error);
+        clearAuthStorage();
+        setUser(null);
+
+        if (!(error instanceof Error) || error.message !== "Could not validate credentials") {
+          console.error("Failed to load user:", error);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -53,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login(email, password);
-      setUser(response.user);
+      setUser(normalizeUser(response.user));
       
       // Check if there's a redirect URL in sessionStorage or query parameter
       let redirectUrl = "/user-dashboard";

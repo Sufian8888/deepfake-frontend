@@ -21,11 +21,15 @@ import { useEffect, useState } from "react";
 import { Button } from "./button";
 import { Avatar, AvatarFallback } from "./avatar";
 import { Separator } from "./separator";
+import { Badge } from "./badge";
+import { billingAPI } from "@/lib/api";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [planLabel, setPlanLabel] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -35,6 +39,21 @@ export function AppSidebar() {
       isCollapsed ? "5rem" : "16rem"
     );
   }, [isCollapsed]);
+
+  useEffect(() => {
+    const loadPlan = async () => {
+      try {
+        const data = await billingAPI.getMe();
+        setIsPremium(Boolean(data?.is_premium));
+        setPlanLabel(data?.subscription_plan ? String(data.subscription_plan).toUpperCase() : null);
+      } catch {
+        setIsPremium(false);
+        setPlanLabel(null);
+      }
+    };
+
+    loadPlan();
+  }, []);
 
   const getInitials = (name: string) => {
     return name
@@ -114,6 +133,11 @@ export function AppSidebar() {
               <p className="text-xs text-muted-foreground truncate">
                 {user?.email}
               </p>
+              {isPremium && planLabel ? (
+                <Badge className="mt-2 bg-primary/10 text-primary border-primary/30">
+                  {planLabel} MEMBER
+                </Badge>
+              ) : null}
             </div>
           )}
         </div>
@@ -149,7 +173,7 @@ export function AppSidebar() {
       </nav>
 
       {/* Logout Button */}
-      <div className="p-4 border-t border-border/50">
+      <div className="p-4 border-t cursor-pointer border-border/50">
         <Button
           variant="ghost"
           onClick={handleLogout}

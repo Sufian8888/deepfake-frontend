@@ -39,6 +39,18 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   return response.json();
 };
 
+const normalizeUser = (user: any) => ({
+  id: user?.id,
+  email: user?.email,
+  full_name: user?.full_name ?? user?.username ?? user?.email ?? "",
+  username: user?.username ?? user?.full_name ?? user?.email ?? "",
+  role: user?.role ?? "user",
+  created_at: user?.created_at,
+  subscription_plan: user?.subscription_plan,
+  subscription_status: user?.subscription_status,
+  subscription_cycle: user?.subscription_cycle,
+});
+
 // Auth API
 export const authAPI = {
   login: async (email: string, password: string) => {
@@ -61,7 +73,7 @@ export const authAPI = {
     const data = await response.json();
     if (typeof window !== 'undefined') {
       localStorage.setItem('token', data.access_token);
-      localStorage.setItem('user', JSON.stringify({ email }));
+      localStorage.setItem('user', JSON.stringify(normalizeUser(data.user)));
     }
     return data;
   },
@@ -87,7 +99,7 @@ export const authAPI = {
     const data = await response.json();
     if (typeof window !== 'undefined') {
       localStorage.setItem('token', data.access_token);
-      localStorage.setItem('user', JSON.stringify({ email, username: fullName }));
+      localStorage.setItem('user', JSON.stringify(normalizeUser(data.user)));
     }
     return data;
   },
@@ -201,6 +213,33 @@ export const dashboardAPI = {
 
   getRecentActivity: async () => {
     return fetchWithAuth(`${API_BASE_URL}/dashboard/recent-activity`);
+  },
+};
+
+// Billing API
+export const billingAPI = {
+  createCheckoutSession: async (plan: 'pro' | 'enterprise', billingCycle: 'monthly' | 'yearly') => {
+    return fetchWithAuth(`${API_BASE_URL}/billing/checkout-session`, {
+      method: 'POST',
+      body: JSON.stringify({ plan, billing_cycle: billingCycle }),
+    });
+  },
+
+  createPortalSession: async () => {
+    return fetchWithAuth(`${API_BASE_URL}/billing/portal-session`, {
+      method: 'POST',
+    });
+  },
+
+  confirmCheckoutSession: async (sessionId: string) => {
+    return fetchWithAuth(`${API_BASE_URL}/billing/confirm-session`, {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId }),
+    });
+  },
+
+  getMe: async () => {
+    return fetchWithAuth(`${API_BASE_URL}/billing/me`);
   },
 };
 

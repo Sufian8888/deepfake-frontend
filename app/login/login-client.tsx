@@ -176,7 +176,7 @@ export function LoginClient() {
           <Link href="/signup">
             <Button
               variant="outline"
-              className="w-full border-border/50 hover:bg-primary/5 hover:border-primary/50 h-11"
+              className="w-full cursor-pointer border-border/50 hover:bg-primary/5 hover:border-primary/50 h-11"
             >
               Create New Account
             </Button>

@@ -252,7 +252,7 @@ export default function SignupPage() {
           <Link href="/login">
             <Button
               variant="outline"
-              className="w-full border-border/50 hover:bg-secondary/5 hover:border-secondary/50 h-11"
+              className="w-full cursor-pointer border-border/50 hover:bg-secondary/5 hover:border-secondary/50 h-11"
             >
               Sign In Instead
             </Button>
