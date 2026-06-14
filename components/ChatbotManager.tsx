@@ -1,13 +1,17 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { FAQChatWidget } from "./FAQChatWidget";
 import { AnalysisChatWidget } from "./AnalysisChatWidget";
+import { Button } from "@/components/ui/button";
+import { useSubscription } from "@/hooks/use-subscription";
 
 export function ChatbotManager() {
   const pathname = usePathname();
   const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+  const { isLoading: planLoading, isProOrAbove } = useSubscription();
 
   // If loading authentication state, do not render any chatbot yet
   if (isLoading) return null;
@@ -25,9 +29,21 @@ export function ChatbotManager() {
     pathname.startsWith(prefix)
   );
 
-  // Show Analysis Assistant if authenticated and on a protected path
+  // Show Analysis Assistant if authenticated, on protected path and on Pro+
   if (isAuthenticated && isProtectedPath) {
-    return <AnalysisChatWidget />;
+    if (planLoading) return null
+    if (isProOrAbove) {
+      return <AnalysisChatWidget />
+    }
+
+    // Authenticated but not Pro+: show upgrade CTA
+    return (
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button onClick={() => router.push('/plans')} className="glow-blue">
+          Upgrade to Pro to unlock Analysis Assistant
+        </Button>
+      </div>
+    )
   }
 
   // Show FAQ Assistant if not authenticated and on a public/guest path

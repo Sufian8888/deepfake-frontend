@@ -14,31 +14,19 @@ import { BarChart3, Crown, Sparkles, Upload, Settings2, CheckCircle2, XCircle } 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import { useSubscription } from "@/hooks/use-subscription";
+import { syncSubscriptionInfo } from "@/lib/subscription";
 
 export default function UserDashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [billingInfo, setBillingInfo] = useState<{
-    subscription_plan: string;
-    subscription_status: string;
-    subscription_cycle: string;
-    is_premium: boolean;
-  } | null>(null);
   const [isManageLoading, setIsManageLoading] = useState(false);
   const [statusBanner, setStatusBanner] = useState<{ type: "success" | "warning"; message: string } | null>(null);
+  const { plan, status, cycle, isPremium } = useSubscription();
 
-  useEffect(() => {
-    const loadBillingInfo = async () => {
-      try {
-        const data = await billingAPI.getMe();
-        setBillingInfo(data);
-      } catch {
-        setBillingInfo(null);
-      }
-    };
-
-    loadBillingInfo();
-  }, []);
+  const planLabel = user?.subscription_plan ?? plan ?? "free";
+  const planStatus = user?.subscription_status ?? status ?? "inactive";
+  const planCycle = user?.subscription_cycle ?? cycle ?? "monthly";
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -55,7 +43,12 @@ export default function UserDashboardPage() {
       const confirmPayment = async () => {
         try {
           const data = await billingAPI.confirmCheckoutSession(sessionId);
-          setBillingInfo(data);
+          syncSubscriptionInfo({
+            plan: data.subscription_plan ?? "free",
+            status: data.subscription_status ?? "inactive",
+            cycle: data.subscription_cycle ?? "monthly",
+            isPremium: Boolean(data.is_premium),
+          });
           setStatusBanner({
             type: "success",
             message: `Upgrade successful. Your account is now ${String(data.subscription_plan).toUpperCase()}.`,
@@ -81,11 +74,6 @@ export default function UserDashboardPage() {
       router.replace("/user-dashboard");
     }
   }, [router]);
-
-  const planLabel = billingInfo?.subscription_plan ?? "free";
-  const planStatus = billingInfo?.subscription_status ?? "inactive";
-  const planCycle = billingInfo?.subscription_cycle ?? "monthly";
-  const isPremium = billingInfo?.is_premium ?? false;
 
   const handleManageSubscription = async () => {
     setIsManageLoading(true);

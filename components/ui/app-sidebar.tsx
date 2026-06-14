@@ -22,14 +22,14 @@ import { Button } from "./button";
 import { Avatar, AvatarFallback } from "./avatar";
 import { Separator } from "./separator";
 import { Badge } from "./badge";
-import { billingAPI } from "@/lib/api";
+import { useSubscription } from "@/hooks/use-subscription";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
-  const [planLabel, setPlanLabel] = useState<string | null>(null);
+  const { plan, isPremium } = useSubscription();
+  const planLabel = plan ? String(plan).toUpperCase() : null;
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -39,21 +39,6 @@ export function AppSidebar() {
       isCollapsed ? "5rem" : "16rem"
     );
   }, [isCollapsed]);
-
-  useEffect(() => {
-    const loadPlan = async () => {
-      try {
-        const data = await billingAPI.getMe();
-        setIsPremium(Boolean(data?.is_premium));
-        setPlanLabel(data?.subscription_plan ? String(data.subscription_plan).toUpperCase() : null);
-      } catch {
-        setIsPremium(false);
-        setPlanLabel(null);
-      }
-    };
-
-    loadPlan();
-  }, []);
 
   const getInitials = (name: string) => {
     return name

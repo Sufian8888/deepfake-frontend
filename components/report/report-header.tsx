@@ -1,11 +1,28 @@
+"use client"
+
 import { FileText, Download, Printer, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useSubscription } from "@/hooks/use-subscription"
+import { authAPI } from "@/lib/api"
+import { useRouter } from "next/navigation"
 
 interface ReportHeaderProps {
   videoData?: any
 }
 
 export function ReportHeader({ videoData }: ReportHeaderProps) {
+  const { plan, isLoading, isProOrAbove } = useSubscription()
+  const router = useRouter()
+  const user = authAPI.getCurrentUser()
+
+  const handleUpgradeClick = () => {
+    if (!user) {
+      router.push('/login?redirect=/plans')
+    } else {
+      router.push('/plans')
+    }
+  }
+
   return (
     <div className="glass rounded-2xl p-6 border border-border/50">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -29,10 +46,21 @@ export function ReportHeader({ videoData }: ReportHeaderProps) {
             <Share2 className="h-4 w-4" />
             <span className="hidden sm:inline">Share</span>
           </Button>
-          <Button size="sm" className="gap-2 glow-blue">
-            <Download className="h-4 w-4" />
-            Download PDF
-          </Button>
+          {isLoading ? (
+            <Button size="sm" disabled className="gap-2">
+              Loading...
+            </Button>
+          ) : isProOrAbove ? (
+            <Button size="sm" className="gap-2 glow-blue">
+              <Download className="h-4 w-4" />
+              Download PDF
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" onClick={handleUpgradeClick} className="gap-2">
+              <Download className="h-4 w-4" />
+              Upgrade to download
+            </Button>
+          )}
         </div>
       </div>
     </div>

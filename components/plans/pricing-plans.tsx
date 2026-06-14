@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { billingAPI } from "@/lib/api";
+import { getSubscription, syncSubscriptionInfo } from "@/lib/subscription";
 
 type BillingCycle = "monthly" | "yearly";
 type PlanKey = "free" | "pro" | "enterprise";
@@ -22,7 +23,9 @@ type Feature = {
 
 const features: Feature[] = [
   { label: "Basic deepfake detection", includedIn: ["free", "pro", "enterprise"] },
+  { label: "Basic report summary", includedIn: ["free", "pro", "enterprise"] },
   { label: "Detailed explanation report", includedIn: ["pro", "enterprise"] },
+  { label: "Download report", includedIn: ["pro", "enterprise"] },
   { label: "Video upload history", includedIn: ["pro", "enterprise"] },
   { label: "Priority processing", includedIn: ["enterprise"] },
   { label: "Custom team onboarding", includedIn: ["enterprise"] },
@@ -38,14 +41,14 @@ const planMeta: Record<PlanKey, {
 }> = {
   free: {
     name: "Free",
-    description: "Try the core detection flow with limited history.",
+    description: "Try the core detection flow with a basic report summary.",
     monthlyPrice: 0,
     yearlyPrice: 0,
     cta: "Start free",
   },
   pro: {
     name: "Pro",
-    description: "Best for creators and researchers who need detailed reports.",
+    description: "Best for creators and researchers who need detailed, downloadable reports.",
     monthlyPrice: 19,
     yearlyPrice: 190,
     cta: "Subscribe now",
@@ -53,7 +56,7 @@ const planMeta: Record<PlanKey, {
   },
   enterprise: {
     name: "Enterprise",
-    description: "For teams that need priority support and custom onboarding.",
+    description: "For teams that need priority support, report downloads, and custom onboarding.",
     monthlyPrice: 99,
     yearlyPrice: 990,
     cta: "Subscribe now",
@@ -86,8 +89,8 @@ export function PricingPlans() {
       }
 
       try {
-        const data = await billingAPI.getMe();
-        setCurrentPlan(data.subscription_plan ? `${data.subscription_plan} (${data.subscription_status})` : null);
+        const plan = await getSubscription();
+        setCurrentPlan(plan ? `${plan.toUpperCase()}` : null);
       } catch {
         setCurrentPlan(null);
       }
@@ -111,6 +114,12 @@ export function PricingPlans() {
       confirmedSessionRef.current = sessionId;
       try {
         const data = await billingAPI.confirmCheckoutSession(sessionId);
+        syncSubscriptionInfo({
+          plan: data.subscription_plan ?? "free",
+          status: data.subscription_status ?? "inactive",
+          cycle: data.subscription_cycle ?? "monthly",
+          isPremium: Boolean(data.is_premium),
+        });
         setCurrentPlan(data.subscription_plan ? `${data.subscription_plan} (${data.subscription_status})` : null);
         setErrorMessage(null);
         router.replace("/user-dashboard?upgrade=success");
@@ -265,7 +274,7 @@ export function PricingPlans() {
                     })}
                   </div>
 
-                  <div className="pt-2">
+                  <div className="pt-2 cursor-pointer">
                     {isFree ? (
                       <Button className="w-full" asChild>
                         <Link href="/signup">
@@ -275,7 +284,7 @@ export function PricingPlans() {
                       </Button>
                     ) : (
                       <Button
-                        className={cn("w-full", plan.highlight && "glow-blue")}
+                        className={cn("w-full cursor-pointer", plan.highlight && "glow-blue")}
                         onClick={() => handleCheckout(planKey as Exclude<PlanKey, "free">)}
                         disabled={isLoading}
                       >
