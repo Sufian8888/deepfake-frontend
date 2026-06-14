@@ -3,9 +3,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  turbopack: {
-    root: new URL('.', import.meta.url).pathname,
-  },
   images: {
     unoptimized: true,
   },

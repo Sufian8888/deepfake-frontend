@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Mail, MessageSquare, Bug } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, MessageSquare, Bug, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
+import { contactAPI } from "@/lib/api";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -17,11 +19,34 @@ export default function ContactPage() {
     subject: "",
     message: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Form submitted:", formData);
+    setError("");
+    setSuccessMessage("");
+    setIsLoading(true);
+
+    try {
+      const response = await contactAPI.submit(formData);
+      setSuccessMessage(response.message || "Your message has been sent successfully.");
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Failed to send your message. Please try again.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (
@@ -39,7 +64,6 @@ export default function ContactPage() {
 
       <main className="flex-1 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 mb-4">
               <div className="p-3 rounded-xl bg-primary/10 glow-blue">
@@ -56,12 +80,27 @@ export default function ContactPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-12">
-            {/* Contact Form */}
             <Card className="glass border-border/50">
               <CardHeader>
                 <CardTitle>Send us a message</CardTitle>
               </CardHeader>
               <CardContent>
+                {error && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                {successMessage && (
+                  <Alert className="mb-4 border-green-500/50 bg-green-500/10">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <AlertDescription className="text-green-700 dark:text-green-400">
+                      {successMessage}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Name</Label>
@@ -72,6 +111,7 @@ export default function ContactPage() {
                       value={formData.name}
                       onChange={handleChange}
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -85,6 +125,7 @@ export default function ContactPage() {
                       value={formData.email}
                       onChange={handleChange}
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -97,6 +138,7 @@ export default function ContactPage() {
                       value={formData.subject}
                       onChange={handleChange}
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -110,17 +152,24 @@ export default function ContactPage() {
                       value={formData.message}
                       onChange={handleChange}
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
-                  <Button type="submit" className="w-full glow-blue">
-                    Send Message
+                  <Button type="submit" className="w-full glow-blue" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      "Send Message"
+                    )}
                   </Button>
                 </form>
               </CardContent>
             </Card>
 
-            {/* Contact Information */}
             <div className="space-y-6">
               <Card className="glass border-border/50">
                 <CardHeader>

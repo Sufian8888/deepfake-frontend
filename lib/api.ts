@@ -39,6 +39,19 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   return response.json();
 };
 
+const parseApiError = (payload: { detail?: unknown }, fallback: string) => {
+  const { detail } = payload;
+  if (typeof detail === "string") {
+    return detail;
+  }
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => (typeof item === "object" && item && "msg" in item ? String(item.msg) : String(item)))
+      .join(", ");
+  }
+  return fallback;
+};
+
 const normalizeUser = (user: any) => ({
   id: user?.id,
   email: user?.email,
@@ -67,7 +80,7 @@ export const authAPI = {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Login failed' }));
-      throw new Error(error.detail || 'Login failed');
+      throw new Error(parseApiError(error, 'Login failed'));
     }
 
     const data = await response.json();
@@ -93,7 +106,7 @@ export const authAPI = {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Signup failed' }));
-      throw new Error(error.detail || 'Signup failed');
+      throw new Error(parseApiError(error, 'Signup failed'));
     }
 
     const data = await response.json();
@@ -127,6 +140,65 @@ export const authAPI = {
 
   getMe: async () => {
     return fetchWithAuth(`${API_BASE_URL}/auth/me`);
+  },
+
+  sendOTP: async (email: string) => {
+    const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Failed to send verification code' }));
+      throw new Error(error.detail || 'Failed to send verification code');
+    }
+
+    return response.json();
+  },
+
+  verifyOTP: async (email: string, otp: string) => {
+    const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, otp }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Failed to verify code' }));
+      throw new Error(error.detail || 'Failed to verify code');
+    }
+
+    return response.json();
+  },
+};
+
+// Contact API
+export const contactAPI = {
+  submit: async (data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+  }) => {
+    const response = await fetch(`${API_BASE_URL}/contact`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Failed to send message' }));
+      throw new Error(error.detail || 'Failed to send message');
+    }
+
+    return response.json();
   },
 };
 

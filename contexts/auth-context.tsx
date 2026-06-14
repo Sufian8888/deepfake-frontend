@@ -160,18 +160,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       router.push(redirectUrl);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || "Login failed");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Login failed";
+      throw new Error(message);
     }
   };
 
   const signup = async (email: string, password: string, fullName: string) => {
     try {
-      await authAPI.signup(email, password, fullName);
-      // After signup, automatically login
-      await login(email, password);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || "Signup failed");
+      const response = await authAPI.signup(email, password, fullName);
+      const normalized = normalizeUser(response.user);
+      setUser(normalized);
+      await hydrateSubscriptionState(response.user);
+
+      let redirectUrl = "/user-dashboard";
+      if (typeof window !== "undefined") {
+        const storedRedirect = sessionStorage.getItem("redirectAfterLogin");
+        if (storedRedirect && storedRedirect !== "/login") {
+          redirectUrl = storedRedirect;
+          sessionStorage.removeItem("redirectAfterLogin");
+        } else if (response.user.role === "admin") {
+          redirectUrl = "/admin";
+        }
+      } else if (response.user.role === "admin") {
+        redirectUrl = "/admin";
+      }
+
+      router.push(redirectUrl);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Signup failed";
+      throw new Error(message);
     }
   };
 
