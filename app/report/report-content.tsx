@@ -98,7 +98,7 @@ export function ReportPageContent() {
 
         <main className="flex-1 ml-[var(--app-sidebar-width,16rem)] p-8">
           <div className="max-w-7xl mx-auto space-y-6">
-            <ReportHeader videoData={videoData} />
+            <ReportHeader videoData={videoData} analysisData={analysisData} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <VerdictCard 

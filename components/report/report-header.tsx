@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button"
 import { useSubscription } from "@/hooks/use-subscription"
 import { authAPI } from "@/lib/api"
 import { useRouter } from "next/navigation"
+import { downloadAnalysisReport } from "./report-download"
 
 interface ReportHeaderProps {
   videoData?: any
+  analysisData?: any
 }
 
-export function ReportHeader({ videoData }: ReportHeaderProps) {
-  const { plan, isLoading, isProOrAbove } = useSubscription()
+export function ReportHeader({ videoData, analysisData }: ReportHeaderProps) {
+  const { isLoading, isProOrAbove } = useSubscription()
   const router = useRouter()
   const user = authAPI.getCurrentUser()
 
@@ -21,6 +23,14 @@ export function ReportHeader({ videoData }: ReportHeaderProps) {
     } else {
       router.push('/plans')
     }
+  }
+
+  const handleDownload = () => {
+    downloadAnalysisReport({
+      analysisData,
+      videoId: videoData?.id ? String(videoData.id) : null,
+      videoData,
+    })
   }
 
   return (
@@ -38,22 +48,14 @@ export function ReportHeader({ videoData }: ReportHeaderProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-            <Printer className="h-4 w-4" />
-            <span className="hidden sm:inline">Print</span>
-          </Button>
-          <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-            <Share2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Share</span>
-          </Button>
           {isLoading ? (
             <Button size="sm" disabled className="gap-2">
               Loading...
             </Button>
           ) : isProOrAbove ? (
-            <Button size="sm" className="gap-2 glow-blue">
+            <Button size="sm" onClick={handleDownload} className="gap-2 glow-blue">
               <Download className="h-4 w-4" />
-              Download PDF
+              Download Report
             </Button>
           ) : (
             <Button size="sm" variant="outline" onClick={handleUpgradeClick} className="gap-2">

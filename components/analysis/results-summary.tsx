@@ -1,7 +1,11 @@
+"use client"
+
 import { AlertTriangle, CheckCircle, XCircle, ArrowRight, Film, BarChart3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { Download } from "lucide-react"
+import { downloadAnalysisReport } from "@/components/report/report-download"
 
 interface ResultsSummaryProps {
   analysisData: any
@@ -26,6 +30,11 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
     const verdict = isDeepfake ? "LIKELY FAKE" : "LIKELY REAL"
     const verdictColor = isDeepfake ? "text-destructive" : "text-green-500"
     const verdictBg = isDeepfake ? "bg-destructive/20" : "bg-green-500/20"
+    const reportHref = videoId ? `/report?videoId=${videoId}` : "/report"
+
+    const handleDownload = () => {
+      downloadAnalysisReport({ analysisData, videoId })
+    }
 
     const details = analysisData.analysis_details || {}
     const frameAnalysis = details.frame_analysis || reportSummary.frame_breakdown || {}
@@ -77,7 +86,21 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
       <div className="space-y-6">
         {/* Verdict Card */}
         <div className="glass rounded-2xl p-6 border border-border/50">
-          <h2 className="text-xl font-semibold mb-6">Analysis Summary</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <h2 className="text-xl font-semibold">Analysis Summary</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" asChild className="gap-2 bg-transparent">
+                <Link href={reportHref}>
+                  <ArrowRight className="h-4 w-4" />
+                  Open Report
+                </Link>
+              </Button>
+              <Button size="sm" onClick={handleDownload} className="gap-2 glow-blue">
+                <Download className="h-4 w-4" />
+                Download Report
+              </Button>
+            </div>
+          </div>
 
           <div className={`rounded-xl p-6 ${verdictBg} mb-6`}>
             <div className="flex items-center gap-4">
