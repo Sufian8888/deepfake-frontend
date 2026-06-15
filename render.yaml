@@ -9,5 +9,7 @@ services:
         value: '20'
       - key: NEXT_PUBLIC_API_URL
         value: https://deepfake-backend-qyef.onrender.com
-      - key: NEXT_PUBLIC_MODEL_API_URL
+      - key: NEXT_PUBLIC_MODEL_URL
         value: https://deepfake-model-vttw.onrender.com
+      - key: NEXT_PUBLIC_SITE_URL
+        value: https://deep-fake.dev
