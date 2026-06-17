@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { dashboardAPI } from "@/lib/api";
+import { adminAPI } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,7 +34,7 @@ export function RecentActivity() {
 
     const fetchActivity = async () => {
       try {
-        const data = await dashboardAPI.getRecentActivity();
+        const data = await adminAPI.getRecentActivity();
         if (!isMounted) return
 
         setActivities(data)

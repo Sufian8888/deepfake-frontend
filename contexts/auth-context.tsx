@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { authAPI, billingAPI, AUTH_SESSION_EXPIRED_EVENT } from "@/lib/api";
+import { authAPI, billingAPI, AUTH_SESSION_EXPIRED_EVENT, isNetworkError } from "@/lib/api";
 import { syncSubscriptionInfo, invalidateSubscriptionCache } from "@/lib/subscription";
 import { useRouter } from "next/navigation";
 
@@ -128,9 +128,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
         }
       } catch (error) {
+        const message = error instanceof Error ? error.message : "";
+        const unreachable =
+          isNetworkError(error) || message.startsWith("Cannot reach API at");
+
+        if (unreachable) {
+          const cached = authAPI.getCurrentUser();
+          if (cached) {
+            setUser(normalizeUser(cached));
+          }
+          console.warn(
+            "Backend unreachable — using cached session. Start backend: uvicorn main:app --reload"
+          );
+          return;
+        }
+
         clearLocalAuth();
 
-        if (!(error instanceof Error) || error.message !== "Could not validate credentials") {
+        if (message !== "Could not validate credentials") {
           console.error("Failed to load user:", error);
         }
       } finally {

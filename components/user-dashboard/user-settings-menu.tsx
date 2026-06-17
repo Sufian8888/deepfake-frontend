@@ -40,6 +40,7 @@ export function UserSettingsMenu() {
   const { plan, status, isPremium } = useSubscription();
   const [isManageLoading, setIsManageLoading] = useState(false);
 
+  const isAdmin = user?.role === "admin";
   const planLabel = user?.subscription_plan ?? plan ?? "free";
   const planStatus = user?.subscription_status ?? status ?? "inactive";
 
@@ -85,19 +86,23 @@ export function UserSettingsMenu() {
 
         <DropdownMenuSeparator />
 
-        <div className="px-2 py-2">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Subscription
-          </p>
-          <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5">
-            <SubscriptionStatusIndicator plan={planLabel} status={planStatus} />
-            <p className="mt-1 text-xs text-muted-foreground capitalize">
-              {planLabel} plan · {user?.subscription_cycle ?? "monthly"} billing
-            </p>
-          </div>
-        </div>
+        {!isAdmin ? (
+          <>
+            <div className="px-2 py-2">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Subscription
+              </p>
+              <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5">
+                <SubscriptionStatusIndicator plan={planLabel} status={planStatus} />
+                <p className="mt-1 text-xs text-muted-foreground capitalize">
+                  {planLabel} plan · {user?.subscription_cycle ?? "monthly"} billing
+                </p>
+              </div>
+            </div>
 
-        <DropdownMenuSeparator />
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
 
           <DropdownMenuItem asChild className="cursor-pointer">
             <Link href="/profile" className="flex items-center gap-2">
@@ -106,22 +111,24 @@ export function UserSettingsMenu() {
             </Link>
           </DropdownMenuItem>
 
-        <DropdownMenuItem
-          className="cursor-pointer"
-          onClick={handleManageSubscription}
-          disabled={isManageLoading}
-        >
-          {isPremium ? (
-            <CreditCard className="h-4 w-4" />
-          ) : (
-            <Crown className="h-4 w-4 text-primary" />
-          )}
-          {isManageLoading
-            ? "Opening..."
-            : isPremium
-              ? "Manage Subscription"
-              : "Upgrade Plan"}
-        </DropdownMenuItem>
+        {!isAdmin ? (
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onClick={handleManageSubscription}
+            disabled={isManageLoading}
+          >
+            {isPremium ? (
+              <CreditCard className="h-4 w-4" />
+            ) : (
+              <Crown className="h-4 w-4 text-primary" />
+            )}
+            {isManageLoading
+              ? "Opening..."
+              : isPremium
+                ? "Manage Subscription"
+                : "Upgrade Plan"}
+          </DropdownMenuItem>
+        ) : null}
 
         <DropdownMenuSeparator />
         </DropdownMenuContent>

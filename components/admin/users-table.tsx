@@ -88,7 +88,7 @@ export function UsersTable() {
     const filtered = users.filter(
       (user) =>
         (user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.full_name.toLowerCase().includes(searchTerm.toLowerCase())) &&
+          (user.full_name || user.email).toLowerCase().includes(searchTerm.toLowerCase())) &&
         (planFilter === "all" || (user.subscription_plan || "free") === planFilter)
     );
     setFilteredUsers(filtered);

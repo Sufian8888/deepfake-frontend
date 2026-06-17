@@ -102,9 +102,12 @@ export function AdminStats() {
     },
     {
       title: "Storage Used",
-      value: stats.storage_used_mb
-        ? `${(stats.storage_used_mb / 1024).toFixed(1)}GB`
-        : "0 GB",
+      value:
+        (stats.storage_used_mb ?? 0) >= 1024
+          ? `${((stats.storage_used_mb ?? 0) / 1024).toFixed(1)} GB`
+          : (stats.storage_used_mb ?? 0) > 0
+            ? `${(stats.storage_used_mb ?? 0).toFixed(0)} MB`
+            : "0 MB",
       icon: Database,
       description: "Total storage",
       color: "text-cyan-500",

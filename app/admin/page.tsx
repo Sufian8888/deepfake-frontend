@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { AppShell } from "@/components/layout/app-shell";
@@ -16,6 +16,7 @@ import { Shield, Users, Video, Activity, Loader2 } from "lucide-react";
 export default function AdminPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
     if (!isLoading) {
@@ -65,7 +66,7 @@ export default function AdminPage() {
           <AdminStats />
         </div>
 
-        <Tabs defaultValue="users" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="glass h-auto w-full flex-wrap justify-start gap-1 border border-border/50 p-1">
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
@@ -82,15 +83,15 @@ export default function AdminPage() {
           </TabsList>
 
           <TabsContent value="users" className="space-y-6">
-            <UsersTable />
+            {activeTab === "users" ? <UsersTable /> : null}
           </TabsContent>
 
           <TabsContent value="videos" className="space-y-6">
-            <VideosTable />
+            {activeTab === "videos" ? <VideosTable /> : null}
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-6">
-            <RecentActivity />
+            {activeTab === "activity" ? <RecentActivity /> : null}
           </TabsContent>
         </Tabs>
       </div>

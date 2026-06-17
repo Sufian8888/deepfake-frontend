@@ -26,6 +26,9 @@ export function clearAuthStorage() {
   }
 }
 
+export const isNetworkError = (error: unknown) =>
+  error instanceof TypeError && error.message === "Failed to fetch";
+
 // Helper function to make authenticated requests
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const token = getAuthToken();
@@ -42,10 +45,20 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    if (isNetworkError(error)) {
+      throw new Error(
+        `Cannot reach API at ${API_BASE_URL}. Is the backend running on port 8000?`
+      );
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'An error occurred' }));
@@ -389,6 +402,10 @@ export const adminAPI = {
 
   getAllVideos: async () => {
     return fetchWithAuth(`${API_BASE_URL}/admin/videos`);
+  },
+
+  getRecentActivity: async () => {
+    return fetchWithAuth(`${API_BASE_URL}/admin/recent-activity`);
   },
 };
 

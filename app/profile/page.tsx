@@ -39,6 +39,7 @@ export default function ProfilePage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
+  const isAdmin = user?.role === "admin";
   const planLabel = user?.subscription_plan ?? plan ?? "free";
   const planStatus = user?.subscription_status ?? status ?? "inactive";
   const planCycle = user?.subscription_cycle ?? cycle ?? "monthly";
@@ -117,7 +118,9 @@ export default function ProfilePage() {
                 Profile <span className="text-primary text-glow-blue">Settings</span>
               </h1>
               <p className="mt-1 text-sm sm:text-base text-muted-foreground">
-                Manage your account, subscription and security
+                {isAdmin
+                  ? "Manage your account and security"
+                  : "Manage your account, subscription and security"}
               </p>
             </div>
           </div>
@@ -138,12 +141,14 @@ export default function ProfilePage() {
                     <CardDescription className="truncate">{user?.email}</CardDescription>
                   </div>
                 </div>
-                <div className="rounded-xl border border-border/50 bg-muted/20 px-4 py-3">
-                  <SubscriptionStatusIndicator plan={planLabel} status={planStatus} />
-                  <p className="mt-1.5 text-xs text-muted-foreground capitalize">
-                    {planLabel} plan · {planCycle} billing
-                  </p>
-                </div>
+                {!isAdmin ? (
+                  <div className="rounded-xl border border-border/50 bg-muted/20 px-4 py-3">
+                    <SubscriptionStatusIndicator plan={planLabel} status={planStatus} />
+                    <p className="mt-1.5 text-xs text-muted-foreground capitalize">
+                      {planLabel} plan · {planCycle} billing
+                    </p>
+                  </div>
+                ) : null}
               </div>
               {user?.created_at ? (
                 <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
