@@ -9,7 +9,6 @@ import {
   Upload,
   Video,
   Shield,
-  LogOut,
   Brain,
   ChevronLeft,
   ChevronRight,
@@ -18,9 +17,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./button";
-import { Avatar, AvatarFallback } from "./avatar";
-import { useSubscription } from "@/hooks/use-subscription";
-import { SubscriptionStatusIndicator } from "@/components/user-dashboard/subscription-status-indicator";
 
 type AppSidebarProps = {
   variant?: "desktop" | "drawer";
@@ -29,11 +25,8 @@ type AppSidebarProps = {
 
 export function AppSidebar({ variant = "desktop", onNavigate }: AppSidebarProps) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { plan, status } = useSubscription();
-  const planLabel = user?.subscription_plan ?? plan ?? "free";
-  const planStatus = user?.subscription_status ?? status ?? "inactive";
   const isDrawer = variant === "drawer";
   const showLabels = isDrawer || !isCollapsed;
 
@@ -57,20 +50,6 @@ export function AppSidebar({ variant = "desktop", onNavigate }: AppSidebarProps)
     window.addEventListener("resize", updateSidebarWidth);
     return () => window.removeEventListener("resize", updateSidebarWidth);
   }, [isCollapsed, isDrawer]);
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const handleLogout = async () => {
-    onNavigate?.();
-    await logout();
-  };
 
   const userLinks = [
     { href: "/user-dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -132,25 +111,6 @@ export function AppSidebar({ variant = "desktop", onNavigate }: AppSidebarProps)
         )}
       </div>
 
-      <div className="border-b border-border/50 p-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 shrink-0 border-2 border-primary/50">
-            <AvatarFallback className="bg-primary/10 font-semibold text-primary">
-              {getInitials(user?.full_name || user?.email || "U")}
-            </AvatarFallback>
-          </Avatar>
-          {showLabels && (
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{user?.full_name || "User"}</p>
-              <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-              <div className="mt-2">
-                <SubscriptionStatusIndicator plan={planLabel} status={planStatus} compact />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
       <nav className="flex-1 overflow-y-auto p-4">
         <div className={cn("space-y-2", !showLabels && "space-y-3")}>
           {links.map((link) => {
@@ -179,20 +139,6 @@ export function AppSidebar({ variant = "desktop", onNavigate }: AppSidebarProps)
           })}
         </div>
       </nav>
-
-      <div className="cursor-pointer border-t border-border/50 p-4">
-        <Button
-          variant="ghost"
-          onClick={handleLogout}
-          className={cn(
-            "w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive",
-            !showLabels && "justify-center px-0"
-          )}
-        >
-          <LogOut className={cn("h-5 w-5", !showLabels && "h-6 w-6")} />
-          {showLabels && <span className="ml-3">Logout</span>}
-        </Button>
-      </div>
     </div>
   );
 }

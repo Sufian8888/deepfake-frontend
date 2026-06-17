@@ -9,7 +9,6 @@ import {
   Crown,
   CreditCard,
   LogOut,
-  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -62,13 +61,14 @@ export function UserSettingsMenu() {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="gap-2 border-border/60 bg-card/80 hover:bg-primary/5">
-          <Settings className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72 glass border-border/50">
+    <div className="inline-flex items-center gap-1 p-1">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10">
+            <Settings className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-72 glass border-border/50">
         <DropdownMenuLabel className="p-0">
           <div className="flex items-center gap-3 px-2 py-3">
             <Avatar className="h-11 w-11 border-2 border-primary/40">
@@ -99,13 +99,12 @@ export function UserSettingsMenu() {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <Link href="/profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Profile Settings
-            {/* <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" /> */}
-          </Link>
-        </DropdownMenuItem>
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link href="/profile" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Profile Settings
+            </Link>
+          </DropdownMenuItem>
 
         <DropdownMenuItem
           className="cursor-pointer"
@@ -125,15 +124,18 @@ export function UserSettingsMenu() {
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
-
-        <DropdownMenuItem
-          className="cursor-pointer text-destructive focus:text-destructive"
-          onClick={() => logout()}
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => logout()}
+        className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+        title="Logout"
+        aria-label="Logout"
+      >
+        <LogOut className="h-4 w-4 " />
+      </Button>
+    </div>
   );
 }

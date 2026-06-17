@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { billingAPI } from "@/lib/api";
 import { getSubscription, syncSubscriptionInfo } from "@/lib/subscription";
+import { useAuth } from "@/contexts/auth-context";
 
 type BillingCycle = "monthly" | "yearly";
 type PlanKey = "free" | "pro" | "enterprise";
@@ -77,6 +78,18 @@ export function PricingPlans() {
   const yearlySavings = useMemo(() => formatSavings(), []);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, isAuthenticated } = useAuth();
+
+  const dashboardHref = user?.role === "admin" ? "/admin" : "/user-dashboard";
+
+  const handleFreePlan = () => {
+    if (isAuthenticated) {
+      router.push(dashboardHref);
+      return;
+    }
+
+    router.push("/signup");
+  };
 
   useEffect(() => {
     const loadBillingState = async () => {
@@ -274,13 +287,11 @@ export function PricingPlans() {
                     })}
                   </div>
 
-                  <div className="pt-2 cursor-pointer">
+                  <div className="pt-2">
                     {isFree ? (
-                      <Button className="w-full" asChild>
-                        <Link href="/signup">
-                          Start free
-                          <ArrowRight className="size-4" />
-                        </Link>
+                      <Button className="w-full cursor-pointer" onClick={handleFreePlan}>
+                        {isAuthenticated ? "Go to Dashboard" : "Start free"}
+                        <ArrowRight className="size-4" />
                       </Button>
                     ) : (
                       <Button

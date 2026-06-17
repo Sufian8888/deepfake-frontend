@@ -7,7 +7,6 @@ import { ProtectedRoute } from "@/components/protected-route";
 import { AppShell } from "@/components/layout/app-shell";
 import { UserStats } from "@/components/user-dashboard/user-stats";
 import { UserVideos } from "@/components/user-dashboard/user-videos";
-import { UserSettingsMenu } from "@/components/user-dashboard/user-settings-menu";
 import { useAuth } from "@/contexts/auth-context";
 import { billingAPI } from "@/lib/api";
 import { BarChart3, CheckCircle2, XCircle } from "lucide-react";
@@ -84,9 +83,6 @@ export default function UserDashboardPage() {
                     Welcome back, {user?.full_name}
                   </p>
                 </div>
-              </div>
-              <div className="self-start sm:self-auto">
-                <UserSettingsMenu />
               </div>
             </div>
 
