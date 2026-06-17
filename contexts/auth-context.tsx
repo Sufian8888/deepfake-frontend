@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { authAPI, billingAPI } from "@/lib/api";
+import { authAPI, billingAPI, AUTH_SESSION_EXPIRED_EVENT } from "@/lib/api";
 import { syncSubscriptionInfo, invalidateSubscriptionCache } from "@/lib/subscription";
 import { useRouter } from "next/navigation";
 
@@ -53,14 +53,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const clearAuthStorage = () => {
-    if (typeof window === "undefined") {
-      return;
+  const clearLocalAuth = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
     }
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    setUser(null);
+    invalidateSubscriptionCache();
   };
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      clearLocalAuth();
+      router.replace("/login");
+    };
+
+    window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired);
+    return () => window.removeEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired);
+  }, [router]);
 
   const hydrateSubscriptionState = async (user: Partial<User>) => {
     if (user.subscription_plan) {
@@ -96,37 +106,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const cachedUser = authAPI.getCurrentUser();
-        if (cachedUser) {
-          setUser(normalizeUser(cachedUser));
-          setIsLoading(false);
-        }
-
         const tokenPresent = typeof window !== "undefined" && localStorage.getItem("token");
-        if (tokenPresent) {
-          const serverUser = await authAPI.getMe();
-          const normalized = normalizeUser(serverUser);
-          setUser(normalized);
-          if (typeof window !== "undefined") {
-            localStorage.setItem("user", JSON.stringify(normalized));
-          }
-          // Sync subscription into shared store so UI updates immediately
-          if (normalized.subscription_plan) {
-            syncSubscriptionInfo({
-              plan: normalized.subscription_plan,
-              status: normalized.subscription_status ?? 'inactive',
-              cycle: normalized.subscription_cycle ?? 'monthly',
-              isPremium: Boolean(normalized.is_premium),
-            })
-          }
+
+        if (!tokenPresent) {
+          clearLocalAuth();
           return;
         }
-        if (!cachedUser) {
-          setUser(null);
+
+        const serverUser = await authAPI.getMe();
+        const normalized = normalizeUser(serverUser);
+        setUser(normalized);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(normalized));
+        }
+        if (normalized.subscription_plan) {
+          syncSubscriptionInfo({
+            plan: normalized.subscription_plan,
+            status: normalized.subscription_status ?? "inactive",
+            cycle: normalized.subscription_cycle ?? "monthly",
+            isPremium: Boolean(normalized.is_premium),
+          });
         }
       } catch (error) {
-        clearAuthStorage();
-        setUser(null);
+        clearLocalAuth();
 
         if (!(error instanceof Error) || error.message !== "Could not validate credentials") {
           console.error("Failed to load user:", error);

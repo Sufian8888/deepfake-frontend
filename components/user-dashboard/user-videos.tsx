@@ -262,30 +262,38 @@ export function UserVideos() {
                       <div className="flex flex-wrap items-center justify-end gap-2">
                         {video.status === 'pending' && (
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="outline"
                             onClick={() => handleAnalyze(video.id)}
                             disabled={analyzingId === video.id}
-                            className="border-primary/50 hover:bg-primary/10"
+                            className="h-8 w-8 border-primary/50 hover:bg-primary/10"
+                            title={analyzingId === video.id ? 'Starting analysis...' : 'Analyze'}
+                            aria-label={analyzingId === video.id ? 'Starting analysis' : 'Analyze video'}
                           >
-                            <Play className="h-3 w-3 mr-1" />
-                            {analyzingId === video.id ? 'Starting...' : 'Analyze'}
+                            <Play className="h-4 w-4" />
                           </Button>
                         )}
                         {video.status === 'completed' && (
                           <Button
-                            size="sm"
+                            size="icon"
                             onClick={() => handleViewReport(video.id)}
-                            className="glow-blue"
+                            className="h-8 w-8 glow-blue"
+                            title="View analysis"
+                            aria-label="View analysis"
                           >
-                            <Eye className="h-3 w-3 mr-1" />
-                            View Analysis
+                            <Eye className="h-4 w-4" />
                           </Button>
                         )}
                         {video.status === 'processing' && (
-                          <Button size="sm" variant="outline" disabled className="border-blue-500/50 text-blue-500 bg-blue-500/10">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Processing...
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            disabled
+                            className="h-8 w-8 border-blue-500/50 text-blue-500 bg-blue-500/10"
+                            title="Processing"
+                            aria-label="Processing"
+                          >
+                            <Clock className="h-4 w-4" />
                           </Button>
                         )}
                         <Button

@@ -10,6 +10,22 @@ const getAuthToken = () => {
   return null;
 };
 
+export const AUTH_SESSION_EXPIRED_EVENT = 'auth:session-expired';
+
+export function clearAuthStorage() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const hadToken = Boolean(localStorage.getItem('token'));
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+
+  if (hadToken) {
+    window.dispatchEvent(new CustomEvent(AUTH_SESSION_EXPIRED_EVENT));
+  }
+}
+
 // Helper function to make authenticated requests
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const token = getAuthToken();
@@ -33,7 +49,16 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'An error occurred' }));
-    throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+
+    if (response.status === 401 && typeof window !== 'undefined') {
+      clearAuthStorage();
+    }
+
+    throw new Error(
+      typeof error.detail === 'string'
+        ? error.detail
+        : `HTTP error! status: ${response.status}`
+    );
   }
 
   return response.json();

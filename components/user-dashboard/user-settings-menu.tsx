@@ -103,7 +103,7 @@ export function UserSettingsMenu() {
           <Link href="/profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Profile Settings
-            <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />
+            {/* <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" /> */}
           </Link>
         </DropdownMenuItem>
 
@@ -122,13 +122,6 @@ export function UserSettingsMenu() {
             : isPremium
               ? "Manage Subscription"
               : "Upgrade Plan"}
-        </DropdownMenuItem>
-
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <Link href="/plans" className="flex items-center gap-2">
-            <Crown className="h-4 w-4" />
-            View All Plans
-          </Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
