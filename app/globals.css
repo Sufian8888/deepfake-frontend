@@ -139,8 +139,15 @@
   body {
     @apply bg-background text-foreground;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  button:not(:disabled):not([disabled]),
+  [data-slot="button"]:not(:disabled):not([disabled]),
+  [data-slot="tabs-trigger"]:not(:disabled):not([disabled]),
+  [data-slot="select-trigger"]:not(:disabled):not([disabled]),
+  [data-slot="toggle"]:not(:disabled):not([disabled]),
+  [data-slot="switch"]:not(:disabled):not([disabled]),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
   }
 }
 

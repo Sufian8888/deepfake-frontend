@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import { AppSidebar } from "@/components/ui/app-sidebar";
+import { AppShell } from "@/components/layout/app-shell";
 import { AdminStats } from "@/components/admin/admin-stats";
 import { UsersTable } from "@/components/admin/users-table";
 import { VideosTable } from "@/components/admin/videos-table";
@@ -43,67 +43,57 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <AppSidebar />
-
-      <main className="flex-1 ml-[var(--app-sidebar-width,16rem)] p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-3 rounded-xl bg-primary/10 glow-blue">
-                <Shield className="h-8 w-8 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold">
-                  Admin{" "}
-                  <span className="text-primary text-glow-blue">Panel</span>
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  System overview and management dashboard
-                </p>
-              </div>
+    <AppShell>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-primary/10 p-2.5 sm:p-3 glow-blue shrink-0">
+              <Shield className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
+                Admin <span className="text-primary text-glow-blue">Panel</span>
+              </h1>
+              <p className="mt-1 text-sm sm:text-base text-muted-foreground">
+                System overview and management dashboard
+              </p>
             </div>
           </div>
-
-          {/* Stats Overview */}
-          <div className="mb-8">
-            <AdminStats />
-          </div>
-
-          {/* Main Content */}
-          <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="glass border border-border/50 p-1">
-              <TabsTrigger value="users" className="gap-2">
-                <Users className="h-4 w-4" />
-                Users
-              </TabsTrigger>
-              <TabsTrigger value="videos" className="gap-2">
-                <Video className="h-4 w-4" />
-                Videos
-              </TabsTrigger>
-              <TabsTrigger value="activity" className="gap-2">
-                <Activity className="h-4 w-4" />
-                Activity
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="users" className="space-y-6">
-              <UsersTable />
-            </TabsContent>
-
-            <TabsContent value="videos" className="space-y-6">
-              <VideosTable />
-            </TabsContent>
-
-            <TabsContent value="activity" className="space-y-6">
-              <div>
-                <RecentActivity />
-              </div>
-            </TabsContent>
-          </Tabs>
         </div>
-      </main>
-    </div>
+
+        <div className="mb-6 sm:mb-8">
+          <AdminStats />
+        </div>
+
+        <Tabs defaultValue="users" className="space-y-6">
+          <TabsList className="glass h-auto w-full flex-wrap justify-start gap-1 border border-border/50 p-1">
+            <TabsTrigger value="users" className="gap-2">
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="videos" className="gap-2">
+              <Video className="h-4 w-4" />
+              Videos
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="gap-2">
+              <Activity className="h-4 w-4" />
+              Activity
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users" className="space-y-6">
+            <UsersTable />
+          </TabsContent>
+
+          <TabsContent value="videos" className="space-y-6">
+            <VideosTable />
+          </TabsContent>
+
+          <TabsContent value="activity" className="space-y-6">
+            <RecentActivity />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AppShell>
   );
 }

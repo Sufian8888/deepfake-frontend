@@ -8,37 +8,55 @@ import {
   LayoutDashboard,
   Upload,
   Video,
-  FileText,
   Shield,
-  Users,
-  BarChart3,
   LogOut,
   Brain,
   ChevronLeft,
   ChevronRight,
+  User,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./button";
 import { Avatar, AvatarFallback } from "./avatar";
-import { Separator } from "./separator";
-import { Badge } from "./badge";
 import { useSubscription } from "@/hooks/use-subscription";
+import { SubscriptionStatusIndicator } from "@/components/user-dashboard/subscription-status-indicator";
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  variant?: "desktop" | "drawer";
+  onNavigate?: () => void;
+};
+
+export function AppSidebar({ variant = "desktop", onNavigate }: AppSidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { plan, isPremium } = useSubscription();
-  const planLabel = plan ? String(plan).toUpperCase() : null;
+  const { plan, status } = useSubscription();
+  const planLabel = user?.subscription_plan ?? plan ?? "free";
+  const planStatus = user?.subscription_status ?? status ?? "inactive";
+  const isDrawer = variant === "drawer";
+  const showLabels = isDrawer || !isCollapsed;
 
   useEffect(() => {
-    if (typeof document === "undefined") return;
+    if (typeof document === "undefined" || isDrawer) return;
 
-    document.documentElement.style.setProperty(
-      "--app-sidebar-width",
-      isCollapsed ? "5rem" : "16rem"
-    );
-  }, [isCollapsed]);
+    const updateSidebarWidth = () => {
+      const isLargeScreen = window.matchMedia("(min-width: 1024px)").matches;
+      if (!isLargeScreen) {
+        document.documentElement.style.setProperty("--app-sidebar-width", "0px");
+        return;
+      }
+
+      document.documentElement.style.setProperty(
+        "--app-sidebar-width",
+        isCollapsed ? "5rem" : "16rem"
+      );
+    };
+
+    updateSidebarWidth();
+    window.addEventListener("resize", updateSidebarWidth);
+    return () => window.removeEventListener("resize", updateSidebarWidth);
+  }, [isCollapsed, isDrawer]);
 
   const getInitials = (name: string) => {
     return name
@@ -50,125 +68,129 @@ export function AppSidebar() {
   };
 
   const handleLogout = async () => {
+    onNavigate?.();
     await logout();
   };
 
-  // Different links for admin and regular users
   const userLinks = [
     { href: "/user-dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/upload", label: "Upload", icon: Upload },
     { href: "/analysis", label: "Analysis", icon: Video },
-    // { href: "/report", label: "Reports", icon: FileText },
+    { href: "/profile", label: "Profile", icon: User },
   ];
 
-  const adminLinks = [
-    { href: "/admin", label: "Admin Panel", icon: Shield },
-    //   { href: "/admin", label: "Users", icon: Users },
-    //   { href: "/admin", label: "Videos", icon: BarChart3 },
-  ];
-
+  const adminLinks = [{ href: "/admin", label: "Admin Panel", icon: Shield }];
   const links = user?.role === "admin" ? adminLinks : userLinks;
-  //   const links = user?.role === "admin" ? adminLinks : userLinks;
 
   return (
     <div
       className={cn(
-        "fixed left-0 top-0 bottom-0 z-40 flex flex-col glass border-r border-border/50 transition-all duration-300",
-        isCollapsed ? "w-20" : "w-64"
+        "flex h-full flex-col border-border/50 glass",
+        isDrawer
+          ? "h-full w-full border-r-0"
+          : "fixed left-0 top-0 bottom-0 z-40 border-r transition-all duration-300",
+        !isDrawer && (isCollapsed ? "w-20" : "w-64")
       )}
     >
-      {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-border/50">
-        {!isCollapsed && (
+      <div className="flex h-16 items-center justify-between border-b border-border/50 px-4">
+        {showLabels ? (
           <Link
             href={user?.role === "admin" ? "/admin" : "/user-dashboard"}
-            className="flex items-center gap-2"
+            className="flex min-w-0 items-center gap-2"
+            onClick={onNavigate}
           >
-            <div className="p-2 rounded-lg bg-primary/10 glow-blue">
+            <div className="rounded-lg bg-primary/10 p-2 glow-blue">
               <Brain className="h-5 w-5 text-primary" />
             </div>
-            <span className="font-bold">DeepFake</span>
+            <span className="truncate font-bold">DeepFake</span>
+          </Link>
+        ) : (
+          <Link
+            href={user?.role === "admin" ? "/admin" : "/user-dashboard"}
+            className="mx-auto"
+            onClick={onNavigate}
+          >
+            <div className="rounded-lg bg-primary/10 p-2 glow-blue">
+              <Brain className="h-5 w-5 text-primary" />
+            </div>
           </Link>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="h-8 w-8"
-        >
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
+
+        {isDrawer ? (
+          <Button variant="ghost" size="icon" onClick={onNavigate} className="h-8 w-8 shrink-0">
+            <X className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="h-8 w-8 shrink-0"
+          >
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        )}
       </div>
 
-      {/* User Info */}
-      <div className="p-4 border-b border-border/50">
+      <div className="border-b border-border/50 p-4">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 border-2 border-primary/50">
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-              {getInitials(user?.email || "U")}
+          <Avatar className="h-10 w-10 shrink-0 border-2 border-primary/50">
+            <AvatarFallback className="bg-primary/10 font-semibold text-primary">
+              {getInitials(user?.full_name || user?.email || "U")}
             </AvatarFallback>
           </Avatar>
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.full_name}</p>
-              <p className="text-xs text-muted-foreground truncate">
-                {user?.email}
-              </p>
-              {isPremium && planLabel ? (
-                <Badge className="mt-2 bg-primary/10 text-primary border-primary/30">
-                  {planLabel} MEMBER
-                </Badge>
-              ) : null}
+          {showLabels && (
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{user?.full_name || "User"}</p>
+              <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+              <div className="mt-2">
+                <SubscriptionStatusIndicator plan={planLabel} status={planStatus} compact />
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Navigation Links */}
       <nav className="flex-1 overflow-y-auto p-4">
-        <div className={cn("space-y-2", isCollapsed && "space-y-3")}>
+        <div className={cn("space-y-2", !showLabels && "space-y-3")}>
           {links.map((link) => {
             const Icon = link.icon;
             const isActive =
-              pathname === link.href || pathname.startsWith(link.href + "/");
+              pathname === link.href || pathname.startsWith(`${link.href}/`);
 
             return (
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={onNavigate}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                  isCollapsed && "justify-center px-0 py-3 min-h-12",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                  !showLabels && "justify-center px-0 py-3 min-h-12",
                   isActive
                     ? "bg-primary/10 text-primary glow-blue"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
-                title={isCollapsed ? link.label : undefined}
+                title={!showLabels ? link.label : undefined}
               >
-                <Icon className={cn("h-5 w-5", isCollapsed && "h-6 w-6")} />
-                {!isCollapsed && <span>{link.label}</span>}
+                <Icon className={cn("h-5 w-5", !showLabels && "h-6 w-6")} />
+                {showLabels && <span>{link.label}</span>}
               </Link>
             );
           })}
         </div>
       </nav>
 
-      {/* Logout Button */}
-      <div className="p-4 border-t cursor-pointer border-border/50">
+      <div className="cursor-pointer border-t border-border/50 p-4">
         <Button
           variant="ghost"
           onClick={handleLogout}
           className={cn(
-            "w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10",
-            isCollapsed && "justify-center px-0"
+            "w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive",
+            !showLabels && "justify-center px-0"
           )}
         >
-          <LogOut className={cn("h-5 w-5", isCollapsed && "h-6 w-6")} />
-          {!isCollapsed && <span className="ml-3">Logout</span>}
+          <LogOut className={cn("h-5 w-5", !showLabels && "h-6 w-6")} />
+          {showLabels && <span className="ml-3">Logout</span>}
         </Button>
       </div>
     </div>

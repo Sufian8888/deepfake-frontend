@@ -154,14 +154,14 @@ export function UsersTable() {
   return (
     <Card className="glass border-border/50">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             User Management
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Select value={planFilter} onValueChange={setPlanFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="All plans" />
               </SelectTrigger>
               <SelectContent>
@@ -171,13 +171,13 @@ export function UsersTable() {
                 <SelectItem value="enterprise">Enterprise</SelectItem>
               </SelectContent>
             </Select>
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 w-64"
+                className="w-full pl-9 sm:w-64"
               />
             </div>
           </div>
@@ -191,8 +191,8 @@ export function UsersTable() {
             ))}
           </div>
         ) : (
-          <div className="rounded-lg border border-border/50 overflow-hidden">
-            <Table>
+          <div className="overflow-x-auto rounded-lg border border-border/50">
+            <Table className="min-w-[760px]">
               <TableHeader>
                 <TableRow className="bg-muted/30">
                   <TableHead>User</TableHead>

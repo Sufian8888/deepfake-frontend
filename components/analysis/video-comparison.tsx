@@ -55,7 +55,7 @@ export function VideoComparison({ videoData, analysisData, size = "default" }: V
 
   try {
     return (
-      <div className="glass rounded-2xl p-6 border border-border/50">
+      <div className="glass rounded-2xl p-4 sm:p-6 border border-border/50">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <h2 className="text-xl font-semibold">Video Analysis</h2>
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>

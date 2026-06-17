@@ -175,6 +175,23 @@ export const authAPI = {
 
     return response.json();
   },
+
+  updateProfile: async (fullName: string) => {
+    return fetchWithAuth(`${API_BASE_URL}/auth/profile`, {
+      method: 'PATCH',
+      body: JSON.stringify({ full_name: fullName }),
+    });
+  },
+
+  updatePassword: async (currentPassword: string, newPassword: string) => {
+    return fetchWithAuth(`${API_BASE_URL}/auth/password`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    });
+  },
 };
 
 // Contact API

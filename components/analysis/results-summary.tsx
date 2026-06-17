@@ -102,20 +102,22 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
             </div>
           </div>
 
-          <div className={`rounded-xl p-6 ${verdictBg} mb-6`}>
-            <div className="flex items-center gap-4">
-              {isDeepfake ? (
-                <XCircle className="h-12 w-12 text-destructive" />
-              ) : (
-                <CheckCircle className="h-12 w-12 text-green-500" />
-              )}
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Verification Result</p>
-                <p className={`text-2xl font-bold ${verdictColor}`}>{verdict}</p>
+          <div className={`rounded-xl p-4 sm:p-6 ${verdictBg} mb-6`}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-4">
+                {isDeepfake ? (
+                  <XCircle className="h-10 w-10 sm:h-12 sm:w-12 text-destructive shrink-0" />
+                ) : (
+                  <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-green-500 shrink-0" />
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Verification Result</p>
+                  <p className={`text-xl sm:text-2xl font-bold ${verdictColor}`}>{verdict}</p>
+                </div>
               </div>
-              <div className="ml-auto text-right">
+              <div className="sm:ml-auto sm:text-right">
                 <p className="text-sm text-muted-foreground mb-1">Confidence</p>
-                <p className={`text-3xl font-bold font-mono ${verdictColor}`}>{overallScore}%</p>
+                <p className={`text-2xl sm:text-3xl font-bold font-mono ${verdictColor}`}>{overallScore}%</p>
               </div>
             </div>
           </div>

@@ -181,7 +181,7 @@ export function PricingPlans() {
           ) : null}
         </div>
 
-        <div className="mt-10 flex items-center justify-center gap-4 rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm backdrop-blur">
+        <div className="mt-10 flex flex-col items-center justify-center gap-3 rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm backdrop-blur sm:flex-row sm:gap-4">
           <Label htmlFor="billing-cycle" className="text-sm font-medium text-muted-foreground">
             Monthly
           </Label>

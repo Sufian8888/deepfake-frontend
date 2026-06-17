@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AppSidebar } from "@/components/ui/app-sidebar";
+import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/protected-route";
 import { ReportHeader } from "@/components/report/report-header";
 import { VerdictCard } from "@/components/report/verdict-card";
@@ -30,11 +30,9 @@ export function ReportPageContent() {
       }
 
       try {
-        // Fetch video details
         const video = await uploadAPI.getFile(parseInt(videoId));
         setVideoData(video);
 
-        // Check if analysis is completed
         if (video.status === "completed") {
           const result = await predictionsAPI.getResult(parseInt(videoId));
           setAnalysisData(result);
@@ -54,15 +52,14 @@ export function ReportPageContent() {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <div className="flex min-h-screen">
-          <AppSidebar />
-          <main className="flex-1 ml-[var(--app-sidebar-width,16rem)] p-8 flex items-center justify-center">
+        <AppShell>
+          <div className="flex min-h-[50vh] items-center justify-center">
             <div className="text-center">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+              <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary" />
               <p className="text-muted-foreground">Loading report...</p>
             </div>
-          </main>
-        </div>
+          </div>
+        </AppShell>
       </ProtectedRoute>
     );
   }
@@ -70,17 +67,16 @@ export function ReportPageContent() {
   if (error) {
     return (
       <ProtectedRoute>
-        <div className="flex min-h-screen">
-          <AppSidebar />
-          <main className="flex-1 ml-[var(--app-sidebar-width,16rem)] p-8 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-destructive mb-4">{error}</p>
+        <AppShell>
+          <div className="flex min-h-[50vh] items-center justify-center px-4 text-center">
+            <div>
+              <p className="mb-4 text-destructive">{error}</p>
               <a href="/user-dashboard" className="text-primary hover:underline">
                 Go to Dashboard
               </a>
             </div>
-          </main>
-        </div>
+          </div>
+        </AppShell>
       </ProtectedRoute>
     );
   }
@@ -93,29 +89,25 @@ export function ReportPageContent() {
 
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen">
-        <AppSidebar />
+      <AppShell>
+        <div className="mx-auto max-w-7xl space-y-6">
+          <ReportHeader videoData={videoData} analysisData={analysisData} />
 
-        <main className="flex-1 ml-[var(--app-sidebar-width,16rem)] p-8">
-          <div className="max-w-7xl mx-auto space-y-6">
-            <ReportHeader videoData={videoData} analysisData={analysisData} />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <VerdictCard 
-                finalLabel={finalLabel}
-                finalConfidence={finalConfidence}
-                avgProbFake={avgProbFake}
-                fallbackIsDeepfake={isDeepfake}
-              />
-              <ExplanationSummary analysisData={analysisData} />
-            </div>
-
-            <HeatmapGrid analysisData={analysisData} videoData={videoData} />
-            <AudioSyncChart analysisData={analysisData} />
-            <AnomalyTable analysisData={analysisData} />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <VerdictCard
+              finalLabel={finalLabel}
+              finalConfidence={finalConfidence}
+              avgProbFake={avgProbFake}
+              fallbackIsDeepfake={isDeepfake}
+            />
+            <ExplanationSummary analysisData={analysisData} />
           </div>
-        </main>
-      </div>
+
+          <HeatmapGrid analysisData={analysisData} videoData={videoData} />
+          <AudioSyncChart analysisData={analysisData} />
+          <AnomalyTable analysisData={analysisData} />
+        </div>
+      </AppShell>
     </ProtectedRoute>
   );
 }

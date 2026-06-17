@@ -232,8 +232,8 @@ export function UserVideos() {
             </Button>
           </div>
         ) : (
-          <div className="rounded-lg border border-border/50 overflow-hidden">
-            <Table>
+          <div className="overflow-x-auto rounded-lg border border-border/50">
+            <Table className="min-w-[720px]">
               <TableHeader>
                 <TableRow className="bg-muted/30">
                   <TableHead>Filename</TableHead>
@@ -259,7 +259,7 @@ export function UserVideos() {
                       {new Date(video.uploaded_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
                         {video.status === 'pending' && (
                           <Button
                             size="sm"

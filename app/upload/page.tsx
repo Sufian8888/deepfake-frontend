@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AppSidebar } from "@/components/ui/app-sidebar";
+import { AppShell } from "@/components/layout/app-shell";
 import { UploadPanel } from "@/components/upload/upload-panel";
 import { PreviewPanel } from "@/components/upload/preview-panel";
 import { ProtectedRoute } from "@/components/protected-route";
@@ -95,33 +95,28 @@ export default function UploadPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen">
-        <AppSidebar />
-
-        <main className="flex-1 ml-[var(--app-sidebar-width,16rem)] p-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-balance">
-                Upload &{" "}
-                <span className="text-primary text-glow-blue">Analyze</span>
-              </h1>
-              <p className="text-muted-foreground max-w-2xl mx-auto text-balance">
-                Upload your video file to begin the deepfake detection analysis
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <UploadPanel
-                onFileSelect={handleFileSelect}
-                isAnalyzing={isUploading || isAnalyzing}
-                onStartAnalysis={handleStartAnalysis}
-                modelOptions={modelOptions}
-              />
-              <PreviewPanel file={selectedFile} />
-            </div>
+      <AppShell>
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-8 sm:mb-12 text-center">
+            <h1 className="mb-4 text-2xl sm:text-3xl lg:text-4xl font-bold text-balance">
+              Upload & <span className="text-primary text-glow-blue">Analyze</span>
+            </h1>
+            <p className="mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground text-balance">
+              Upload your video file to begin the deepfake detection analysis
+            </p>
           </div>
-        </main>
-      </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <UploadPanel
+              onFileSelect={handleFileSelect}
+              isAnalyzing={isUploading || isAnalyzing}
+              onStartAnalysis={handleStartAnalysis}
+              modelOptions={modelOptions}
+            />
+            <PreviewPanel file={selectedFile} />
+          </div>
+        </div>
+      </AppShell>
     </ProtectedRoute>
   );
 }
