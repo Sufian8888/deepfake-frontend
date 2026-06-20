@@ -1,9 +1,15 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Play, Pause, Layers, SplitSquareHorizontal, Blend, Flame } from "lucide-react"
+import { uploadAPI } from "@/lib/api"
+import {
+  buildHeatmapPreviewItems,
+  getAnnotatedFramePaths,
+  resolveFrameImageSrc,
+} from "@/lib/frame-analysis"
 
 type ViewMode = "side-by-side" | "overlay" | "compare"
 
@@ -17,38 +23,73 @@ export function VideoComparison({ videoData, analysisData, size = "default" }: V
   const [viewMode, setViewMode] = useState<ViewMode>("compare")
   const [isPlaying, setIsPlaying] = useState(false)
   const [overlayOpacity, setOverlayOpacity] = useState(55)
+  const [videoSrc, setVideoSrc] = useState<string | null>(null)
+  const [videoLoadError, setVideoLoadError] = useState<string | null>(null)
 
   const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
   const rawModelUrl = process.env.NEXT_PUBLIC_MODEL_URL || "http://localhost:5000"
   const normalizedApiUrl = rawApiUrl.replace(/\/$/, "")
   const normalizedModelUrl = rawModelUrl.replace(/\/$/, "")
 
-  const filename = videoData?.filename as string | undefined
-  const normalizedPath = filename
-    ? filename.startsWith("uploads/")
+  const fallbackUploadsSrc = useMemo(() => {
+    const filename = videoData?.filename as string | undefined
+    if (!filename) return null
+
+    const normalizedPath = filename.startsWith("uploads/")
       ? `/${filename}`
       : `/uploads/${filename}`
-    : null
 
-  const videoSrc = normalizedPath ? `${normalizedApiUrl}${normalizedPath}` : null
+    return `${normalizedApiUrl}${normalizedPath}`
+  }, [normalizedApiUrl, videoData?.filename])
 
-  const annotatedFrames = analysisData?.analysis_details?.annotated_frames || []
+  useEffect(() => {
+    setVideoLoadError(null)
+    setVideoSrc(null)
+
+    if (!videoData) return
+
+    if (videoData.cloud_url) {
+      setVideoSrc(videoData.cloud_url)
+      return
+    }
+
+    if (videoData.id) {
+      setVideoSrc(uploadAPI.getVideoStreamUrl(videoData.id))
+      return
+    }
+
+    if (fallbackUploadsSrc) {
+      setVideoSrc(fallbackUploadsSrc)
+    }
+  }, [videoData, fallbackUploadsSrc])
+
+  const annotatedFrames = getAnnotatedFramePaths(analysisData)
   const isDemoMode = analysisData?.analysis_details?.mode === "demo"
 
   const heatmapSrc = useMemo(() => {
+    const previewItems = buildHeatmapPreviewItems(analysisData, 1)
+    if (previewItems[0]?.src) {
+      return previewItems[0].src
+    }
+
     if (!annotatedFrames.length) {
       return null
     }
 
-    const firstFramePath = String(annotatedFrames[0]).replace(/\\/g, "/").replace(/^\/+/, "")
-    const normalizedFramePath = firstFramePath
-      .replace(/^model\/analysis_results\//, "")
-      .replace(/^analysis_results\//, "")
-
-    return `${normalizedModelUrl}/model/analysis_results/${normalizedFramePath}`
-  }, [annotatedFrames, normalizedModelUrl])
+    return resolveFrameImageSrc(
+      {},
+      { annotatedPath: annotatedFrames[0], modelUrl: normalizedModelUrl }
+    )
+  }, [analysisData, annotatedFrames, normalizedModelUrl])
 
   const togglePlay = () => setIsPlaying((prev) => !prev)
+  const handleVideoError = () => {
+    if (fallbackUploadsSrc && videoSrc !== fallbackUploadsSrc) {
+      setVideoSrc(fallbackUploadsSrc)
+      return
+    }
+    setVideoLoadError("Video file is unavailable. It may have been uploaded on another server — please re-upload.")
+  }
   const frameClassName = size === "large" ? "relative rounded-xl overflow-hidden bg-black/50 border border-border/50 min-h-[28rem] lg:min-h-[34rem]" : "relative aspect-video rounded-xl overflow-hidden bg-black/50 border border-border/50"
   const heatmapFrameClassName = size === "large" ? "relative rounded-xl overflow-hidden bg-black/50 border border-primary/50 glow-blue min-h-[28rem] lg:min-h-[34rem]" : "relative aspect-video rounded-xl overflow-hidden bg-black/50 border border-primary/50 glow-blue"
   const overlayFrameClassName = size === "large" ? "relative rounded-xl overflow-hidden bg-black/50 border border-primary/40 min-h-[28rem] lg:min-h-[34rem]" : "relative aspect-video rounded-xl overflow-hidden bg-black/50 border border-primary/40"
@@ -80,9 +121,16 @@ export function VideoComparison({ videoData, analysisData, size = "default" }: V
           <div className={frameClassName}>
             <div className="absolute inset-0 flex items-center justify-center">
               {videoSrc ? (
-                <video src={videoSrc} className="w-full h-full object-contain" controls />
+                <video
+                  src={videoSrc}
+                  className="w-full h-full object-contain"
+                  controls
+                  onError={handleVideoError}
+                />
+              ) : videoLoadError ? (
+                <p className="px-4 text-center text-sm text-muted-foreground">{videoLoadError}</p>
               ) : (
-                <p className="text-muted-foreground">No video available</p>
+                <p className="text-muted-foreground">Loading video...</p>
               )}
             </div>
             <div className="absolute bottom-3 left-3 px-3 py-1 rounded-lg glass text-xs font-medium">Original</div>
@@ -113,9 +161,11 @@ export function VideoComparison({ videoData, analysisData, size = "default" }: V
             <div className={overlayFrameClassName}>
               <div className="absolute inset-0 flex items-center justify-center">
                 {videoSrc ? (
-                  <video src={videoSrc} className="w-full h-full object-contain" controls />
+                  <video src={videoSrc} className="w-full h-full object-contain" controls onError={handleVideoError} />
+                ) : videoLoadError ? (
+                  <p className="px-4 text-center text-sm text-muted-foreground">{videoLoadError}</p>
                 ) : (
-                  <p className="text-muted-foreground">No video available</p>
+                  <p className="text-muted-foreground">Loading video...</p>
                 )}
               </div>
               {heatmapSrc && (
@@ -147,9 +197,11 @@ export function VideoComparison({ videoData, analysisData, size = "default" }: V
             <div className={overlayFrameClassName}>
               <div className="absolute inset-0 flex items-center justify-center">
                 {videoSrc ? (
-                  <video src={videoSrc} className="w-full h-full object-contain" controls />
+                  <video src={videoSrc} className="w-full h-full object-contain" controls onError={handleVideoError} />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">No video available</div>
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    {videoLoadError || (videoSrc ? null : "Loading video...")}
+                  </div>
                 )}
               </div>
 

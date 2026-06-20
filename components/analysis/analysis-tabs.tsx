@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle, Image as ImageIcon, Flame } from "lucide-react";
+import { AlertTriangle, CheckCircle, Image as ImageIcon } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,6 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  buildHeatmapPreviewItems,
+  getAnnotatedFramePaths,
+  getFrameAnalysis,
+  getFrameDetails,
+  getFrameLabel,
+  getFrameNumber,
+} from "@/lib/frame-analysis";
 
 interface AnalysisTabsProps {
   analysisData?: any;
@@ -28,20 +36,12 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
     }
 
   const details = analysisData.analysis_details;
-  const frameAnalysis = details.frame_analysis || analysisData.report_summary?.frame_breakdown || analysisData.analysis_details?.report_summary?.frame_breakdown || {};
-  const frameDetails = frameAnalysis.frame_details || [];
-  const annotatedFrames = details.annotated_frames || [];
-  const rawModelUrl = process.env.NEXT_PUBLIC_MODEL_URL || "http://localhost:5000";
-  const normalizedModelUrl = rawModelUrl.replace(/\/$/, "");
-
-  const resolveAnnotatedFrameUrl = (framePath: string) => {
-    const normalizedFramePath = String(framePath).replace(/\\/g, "/").replace(/^\/+/, "");
-    const relativePath = normalizedFramePath
-      .replace(/^model\/analysis_results\//, "")
-      .replace(/^analysis_results\//, "");
-
-    return `${normalizedModelUrl}/model/analysis_results/${relativePath}`;
-  };
+  const frameAnalysis = getFrameAnalysis(analysisData);
+  const frameDetails = getFrameDetails(analysisData);
+  const annotatedFrames = getAnnotatedFramePaths(analysisData);
+  const previewItems = buildHeatmapPreviewItems(analysisData, annotatedFrames.length || frameDetails.length || 12);
+  const visiblePreviewItems = previewItems.filter((item) => Boolean(item.src));
+  const hasFrameMetadata = frameDetails.length > 0 || annotatedFrames.length > 0;
 
   // Calculate statistics from real data
   const totalFrames = frameAnalysis.total_frames || 0;
@@ -113,54 +113,60 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {frameDetails.map((frame: any, idx: number) => (
-                  <TableRow key={idx} className={frame.is_suspicious ? 'bg-destructive/5' : ''}>
+                {frameDetails.map((frame: any, idx: number) => {
+                  const details = frame.analysis_details || frame;
+                  const confidence = frame.confidence_score ?? details.confidence ?? frame.confidence ?? 0;
+                  const isSuspicious = frame.is_suspicious ?? details.is_suspicious ?? frame.is_fake;
+
+                  return (
+                  <TableRow key={idx} className={isSuspicious ? 'bg-destructive/5' : ''}>
                     <TableCell className="font-mono font-semibold">
-                      {frame.frame_num ?? idx + 1}
+                      {getFrameNumber(frame, idx)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {frame.is_suspicious ? (
+                        {isSuspicious ? (
                           <>
                             <AlertTriangle className="h-4 w-4 text-destructive" />
-                            <Badge variant="destructive">{frame.label || 'FAKE'}</Badge>
+                            <Badge variant="destructive">{getFrameLabel(frame)}</Badge>
                           </>
                         ) : (
                           <>
                             <CheckCircle className="h-4 w-4 text-green-500" />
                             <Badge variant="outline" className="border-green-500 text-green-500">
-                              {frame.label || 'REAL'}
+                              {getFrameLabel(frame)}
                             </Badge>
                           </>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{frame.pred_class || frame.class || 'N/A'}</TableCell>
+                    <TableCell className="font-mono text-sm">{details.pred_class || frame.pred_class || frame.class || 'N/A'}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Progress 
-                          value={Math.min(100, Math.max(0, (frame.confidence ?? 0)))}
+                          value={Math.min(100, Math.max(0, confidence))}
                           className="h-2 w-24" 
                         />
                         <span className={`font-mono text-sm ${
-                          frame.is_suspicious ? 'text-destructive' : 'text-green-500'
+                          isSuspicious ? 'text-destructive' : 'text-green-500'
                         }`}>
-                          {(frame.confidence ?? 0).toFixed(1)}%
+                          {confidence.toFixed(1)}%
                         </span>
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-sm">
-                      {(frame.raw_score ?? frame.p_fake ?? frame.confidence ?? 0).toFixed(4)}
+                      {(details.raw_score ?? frame.raw_score ?? frame.p_fake ?? confidence ?? 0).toFixed(4)}
                     </TableCell>
                     <TableCell className="text-center">
-                      {(frame.faces_detected ?? 0) > 0 ? (
-                        <Badge variant="outline">{frame.faces_detected}</Badge>
+                      {(details.faces_detected ?? frame.faces_detected ?? 0) > 0 ? (
+                        <Badge variant="outline">{details.faces_detected ?? frame.faces_detected}</Badge>
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -168,27 +174,39 @@ export function AnalysisTabs({ analysisData }: AnalysisTabsProps) {
       )}
 
       {/* Annotated Frames Grid */}
-      {annotatedFrames.length > 0 && (
+      {hasFrameMetadata && (
         <Card className="glass border-border/50 p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <ImageIcon className="h-5 w-5" />
             Annotated Frames (Face Detection)
           </h2>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {annotatedFrames.map((framePath: string, idx: number) => (
-              <div key={idx} className="relative group">
-                <img
-                  src={resolveAnnotatedFrameUrl(framePath)}
-                  alt={`Annotated frame ${idx + 1}`}
-                  className="w-full h-auto rounded-lg border border-border/50 transition-transform group-hover:scale-105"
-                />
-                <div className="absolute bottom-2 left-2 px-2 py-1 rounded bg-black/70 text-xs text-white">
-                  Frame {idx + 1}
+
+          {visiblePreviewItems.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {visiblePreviewItems.map((item, idx) => (
+                <div key={item.key} className="relative group">
+                  <img
+                    src={item.src!}
+                    alt={`Annotated frame ${getFrameNumber(item.frame, idx)}`}
+                    className="w-full h-auto rounded-lg border border-border/50 transition-transform group-hover:scale-105"
+                  />
+                  <div className="absolute bottom-2 left-2 px-2 py-1 rounded bg-black/70 text-xs text-white">
+                    Frame {getFrameNumber(item.frame, idx)}
+                  </div>
+                  <div className="absolute top-2 right-2">
+                    <Badge variant={getFrameLabel(item.frame) === "FAKE" ? "destructive" : "outline"}>
+                      {getFrameLabel(item.frame)}
+                    </Badge>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {frameDetails.length || annotatedFrames.length} frames were analyzed, but the saved frame images are no longer available.
+              Re-run analysis on this video to regenerate annotated frames.
+            </p>
+          )}
         </Card>
       )}
 

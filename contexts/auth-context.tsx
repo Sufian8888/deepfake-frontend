@@ -48,9 +48,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function readCachedUser(): User | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const token = localStorage.getItem("token");
+  const cached = authAPI.getCurrentUser();
+  if (!token || !cached) {
+    return null;
+  }
+
+  return normalizeUser(cached);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(() => readCachedUser());
+  const [isLoading, setIsLoading] = useState(() => {
+    if (typeof window === "undefined") {
+      return true;
+    }
+
+    const tokenPresent = Boolean(localStorage.getItem("token"));
+    return tokenPresent && !readCachedUser();
+  });
   const router = useRouter();
 
   const clearLocalAuth = () => {
@@ -102,17 +123,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Load user from localStorage on mount
+  // Load user from localStorage on mount, then refresh from server in background
   useEffect(() => {
     const loadUser = async () => {
-      try {
-        const tokenPresent = typeof window !== "undefined" && localStorage.getItem("token");
+      const tokenPresent = typeof window !== "undefined" && localStorage.getItem("token");
 
-        if (!tokenPresent) {
-          clearLocalAuth();
-          return;
+      if (!tokenPresent) {
+        clearLocalAuth();
+        setIsLoading(false);
+        return;
+      }
+
+      const cached = readCachedUser();
+      if (cached) {
+        setUser(cached);
+        setIsLoading(false);
+        if (cached.subscription_plan) {
+          syncSubscriptionInfo({
+            plan: cached.subscription_plan,
+            status: cached.subscription_status ?? "inactive",
+            cycle: cached.subscription_cycle ?? "monthly",
+            isPremium: Boolean(cached.is_premium),
+          });
         }
+      }
 
+      try {
         const serverUser = await authAPI.getMe();
         const normalized = normalizeUser(serverUser);
         setUser(normalized);
@@ -133,9 +169,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isNetworkError(error) || message.startsWith("Cannot reach API at");
 
         if (unreachable) {
-          const cached = authAPI.getCurrentUser();
-          if (cached) {
-            setUser(normalizeUser(cached));
+          if (!cached) {
+            const fallback = readCachedUser();
+            if (fallback) {
+              setUser(fallback);
+            }
           }
           console.warn(
             "Backend unreachable — using cached session. Start backend: uvicorn main:app --reload"

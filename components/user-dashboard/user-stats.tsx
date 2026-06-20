@@ -29,7 +29,7 @@ export function UserStats() {
         if (isMounted) {
           setStats(data)
           if (data?.pending_analyses > 0 && !intervalId) {
-            intervalId = setInterval(fetchStats, 5000)
+            intervalId = setInterval(fetchStats, 8000)
           }
           if (data?.pending_analyses === 0 && intervalId) {
             clearInterval(intervalId)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { uploadAPI, predictionsAPI } from '@/lib/api'
 import {
@@ -14,7 +14,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Video, Eye, Trash2, Play, CheckCircle, XCircle, Clock, AlertTriangle, Download } from 'lucide-react'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
+import { Video, Eye, Trash2, Play, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -27,6 +36,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+
+const PAGE_SIZE = 10
 
 interface VideoData {
   id: number
@@ -41,60 +52,47 @@ interface VideoData {
   processed_at?: string
 }
 
+function getPageNumbers(currentPage: number, totalPages: number) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1)
+  }
+
+  const pages = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1])
+  return Array.from(pages)
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((a, b) => a - b)
+}
+
 export function UserVideos() {
   const [videos, setVideos] = useState<VideoData[]>([])
+  const [totalVideos, setTotalVideos] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [deleteVideoId, setDeleteVideoId] = useState<number | null>(null)
   const [analyzingId, setAnalyzingId] = useState<number | null>(null)
   const { toast } = useToast()
   const router = useRouter()
 
-  useEffect(() => {
-    let isMounted = true
-    let intervalId: ReturnType<typeof setInterval> | null = null
+  const totalPages = Math.max(1, Math.ceil(totalVideos / PAGE_SIZE))
 
-    const refreshVideos = async () => {
-      try {
-        const data = await uploadAPI.listFiles()
-        if (!isMounted) return
-
-        setVideos(data)
-
-        const hasProcessing = Array.isArray(data) && data.some((video: VideoData) => video.status === 'processing' || video.status === 'pending')
-        if (hasProcessing && !intervalId) {
-          intervalId = setInterval(refreshVideos, 5000)
-        }
-        if (!hasProcessing && intervalId) {
-          clearInterval(intervalId)
-          intervalId = null
-        }
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch videos',
-          variant: 'destructive',
-        })
-      } finally {
-        if (isMounted) {
-          setIsLoading(false)
-        }
-      }
+  const fetchVideos = useCallback(async (page = currentPage, showLoading = false) => {
+    if (showLoading) {
+      setIsLoading(true)
     }
 
-    refreshVideos()
-
-    return () => {
-      isMounted = false
-      if (intervalId) {
-        clearInterval(intervalId)
-      }
-    }
-  }, [])
-
-  const fetchVideos = async () => {
     try {
-      const data = await uploadAPI.listFiles()
-      setVideos(data)
+      const skip = (page - 1) * PAGE_SIZE
+      const data = await uploadAPI.listFiles(skip, PAGE_SIZE)
+      const items = Array.isArray(data?.items) ? data.items : []
+      const total = typeof data?.total === 'number' ? data.total : items.length
+
+      setVideos(items)
+      setTotalVideos(total)
+
+      const maxPage = Math.max(1, Math.ceil(total / PAGE_SIZE))
+      if (page > maxPage) {
+        setCurrentPage(maxPage)
+      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -104,7 +102,60 @@ export function UserVideos() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [currentPage, toast])
+
+  useEffect(() => {
+    let isMounted = true
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
+    const refreshVideos = async () => {
+      try {
+        const skip = (currentPage - 1) * PAGE_SIZE
+        const data = await uploadAPI.listFiles(skip, PAGE_SIZE)
+        if (!isMounted) return
+
+        const items = Array.isArray(data?.items) ? data.items : []
+        const total = typeof data?.total === 'number' ? data.total : items.length
+
+        setVideos(items)
+        setTotalVideos(total)
+
+        const hasProcessing = items.some(
+          (video: VideoData) => video.status === 'processing' || video.status === 'pending'
+        )
+
+        if (hasProcessing && !intervalId) {
+          intervalId = setInterval(refreshVideos, 8000)
+        }
+        if (!hasProcessing && intervalId) {
+          clearInterval(intervalId)
+          intervalId = null
+        }
+      } catch (error) {
+        if (isMounted) {
+          toast({
+            title: 'Error',
+            description: 'Failed to fetch videos',
+            variant: 'destructive',
+          })
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    setIsLoading(true)
+    refreshVideos()
+
+    return () => {
+      isMounted = false
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [currentPage, toast])
 
   const handleDelete = async () => {
     if (!deleteVideoId) return
@@ -115,7 +166,15 @@ export function UserVideos() {
         title: 'Success',
         description: 'Video deleted successfully',
       })
-      fetchVideos()
+
+      const nextPage =
+        videos.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage
+
+      if (nextPage !== currentPage) {
+        setCurrentPage(nextPage)
+      } else {
+        await fetchVideos(currentPage)
+      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -135,12 +194,14 @@ export function UserVideos() {
         title: 'Analysis Started',
         description: 'Your video is being analyzed',
       })
-      setTimeout(fetchVideos, 1000)
-      setTimeout(fetchVideos, 6000)
-    } catch (error: any) {
+      setTimeout(() => fetchVideos(currentPage), 1000)
+      setTimeout(() => fetchVideos(currentPage), 6000)
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to start analysis'
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to start analysis',
+        description: message,
         variant: 'destructive',
       })
     } finally {
@@ -208,6 +269,10 @@ export function UserVideos() {
     )
   }
 
+  const pageNumbers = getPageNumbers(currentPage, totalPages)
+  const rangeStart = totalVideos === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
+  const rangeEnd = Math.min(currentPage * PAGE_SIZE, totalVideos)
+
   return (
     <Card className="glass border-border/50">
       <CardHeader>
@@ -223,7 +288,7 @@ export function UserVideos() {
               <Skeleton key={i} className="h-16 w-full" />
             ))}
           </div>
-        ) : videos.length === 0 ? (
+        ) : totalVideos === 0 ? (
           <div className="text-center py-12">
             <Video className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">No videos uploaded yet</p>
@@ -232,85 +297,153 @@ export function UserVideos() {
             </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-border/50">
-            <Table className="min-w-[720px]">
-              <TableHeader>
-                <TableRow className="bg-muted/30">
-                  <TableHead>Filename</TableHead>
-                  <TableHead>Size</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Result</TableHead>
-                  <TableHead>Uploaded</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {videos.map((video) => (
-                  <TableRow key={video.id} className="hover:bg-muted/20">
-                    <TableCell className="font-medium max-w-xs truncate">
-                      {video.original_filename}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatFileSize(video.file_size)}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(video.status)}</TableCell>
-                    <TableCell>{getResultBadge(video.is_deepfake, video.confidence_score)}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(video.uploaded_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        {video.status === 'pending' && (
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            onClick={() => handleAnalyze(video.id)}
-                            disabled={analyzingId === video.id}
-                            className="h-8 w-8 border-primary/50 hover:bg-primary/10"
-                            title={analyzingId === video.id ? 'Starting analysis...' : 'Analyze'}
-                            aria-label={analyzingId === video.id ? 'Starting analysis' : 'Analyze video'}
-                          >
-                            <Play className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {video.status === 'completed' && (
-                          <Button
-                            size="icon"
-                            onClick={() => handleViewReport(video.id)}
-                            className="h-8 w-8 glow-blue"
-                            title="View analysis"
-                            aria-label="View analysis"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {video.status === 'processing' && (
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            disabled
-                            className="h-8 w-8 border-blue-500/50 text-blue-500 bg-blue-500/10"
-                            title="Processing"
-                            aria-label="Processing"
-                          >
-                            <Clock className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setDeleteVideoId(video.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          <>
+            <div className="overflow-x-auto rounded-lg border border-border/50">
+              <Table className="min-w-[720px]">
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead>Filename</TableHead>
+                    <TableHead>Size</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Result</TableHead>
+                    <TableHead>Uploaded</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {videos.map((video) => (
+                    <TableRow key={video.id} className="hover:bg-muted/20">
+                      <TableCell className="font-medium max-w-xs truncate">
+                        {video.original_filename}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatFileSize(video.file_size)}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(video.status)}</TableCell>
+                      <TableCell>{getResultBadge(video.is_deepfake, video.confidence_score)}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(video.uploaded_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          {video.status === 'pending' && (
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={() => handleAnalyze(video.id)}
+                              disabled={analyzingId === video.id}
+                              className="h-8 w-8 border-primary/50 hover:bg-primary/10"
+                              title={analyzingId === video.id ? 'Starting analysis...' : 'Analyze'}
+                              aria-label={analyzingId === video.id ? 'Starting analysis' : 'Analyze video'}
+                            >
+                              <Play className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {video.status === 'completed' && (
+                            <Button
+                              size="icon"
+                              onClick={() => handleViewReport(video.id)}
+                              className="h-8 w-8 glow-blue"
+                              title="View analysis"
+                              aria-label="View analysis"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {video.status === 'processing' && (
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              disabled
+                              className="h-8 w-8 border-blue-500/50 text-blue-500 bg-blue-500/10"
+                              title="Processing"
+                              aria-label="Processing"
+                            >
+                              <Clock className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setDeleteVideoId(video.id)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Showing {rangeStart}–{rangeEnd} of {totalVideos} videos
+              </p>
+
+              {totalPages > 1 ? (
+                <Pagination className="mx-0 w-auto justify-end">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(event) => {
+                          event.preventDefault()
+                          if (currentPage > 1) {
+                            setCurrentPage((page) => page - 1)
+                          }
+                        }}
+                        className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+
+                    {pageNumbers.map((page, index) => {
+                      const previousPage = pageNumbers[index - 1]
+                      const showEllipsis = previousPage && page - previousPage > 1
+
+                      return (
+                        <span key={page} className="contents">
+                          {showEllipsis ? (
+                            <PaginationItem>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          ) : null}
+                          <PaginationItem>
+                            <PaginationLink
+                              href="#"
+                              isActive={page === currentPage}
+                              onClick={(event) => {
+                                event.preventDefault()
+                                setCurrentPage(page)
+                              }}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        </span>
+                      )
+                    })}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(event) => {
+                          event.preventDefault()
+                          if (currentPage < totalPages) {
+                            setCurrentPage((page) => page + 1)
+                          }
+                        }}
+                        className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              ) : null}
+            </div>
+          </>
         )}
       </CardContent>
 

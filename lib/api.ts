@@ -295,12 +295,22 @@ export const uploadAPI = {
     });
   },
 
-  listFiles: async () => {
-    return fetchWithAuth(`${API_BASE_URL}/upload/videos`);
+  listFiles: async (skip = 0, limit = 10) => {
+    return fetchWithAuth(`${API_BASE_URL}/upload/videos?skip=${skip}&limit=${limit}`);
   },
 
   getFile: async (videoId: number) => {
     return fetchWithAuth(`${API_BASE_URL}/upload/videos/${videoId}`);
+  },
+
+  getLatestCompleted: async () => {
+    return fetchWithAuth(`${API_BASE_URL}/upload/videos/latest-completed`);
+  },
+
+  getVideoStreamUrl: (videoId: number) => {
+    const token = getAuthToken();
+    const base = `${API_BASE_URL}/upload/videos/${videoId}/stream`;
+    return token ? `${base}?access_token=${encodeURIComponent(token)}` : base;
   },
 
   deleteFile: async (videoId: number) => {
@@ -319,8 +329,18 @@ export const predictionsAPI = {
     });
   },
 
-  getResult: async (videoId: number) => {
-    return fetchWithAuth(`${API_BASE_URL}/predictions/${videoId}/result`);
+  getResult: async (videoId: number, options?: { includeThumbnails?: boolean }) => {
+    const includeThumbnails = options?.includeThumbnails ?? false;
+    const query = includeThumbnails ? '?include_thumbnails=true' : '?include_thumbnails=false';
+    return fetchWithAuth(`${API_BASE_URL}/predictions/${videoId}/result${query}`);
+  },
+
+  getFrameThumbnails: async (videoId: number, offset = 0, limit = 50) => {
+    const query = new URLSearchParams({
+      offset: String(offset),
+      limit: String(limit),
+    });
+    return fetchWithAuth(`${API_BASE_URL}/predictions/${videoId}/frames/thumbnails?${query}`);
   },
 
   getStatus: async (videoId: number) => {

@@ -12,7 +12,7 @@ type SubscriptionInfo = {
 let cache: { info?: SubscriptionInfo; expiresAt?: number } = {}
 let inflight: Promise<SubscriptionInfo> | null = null
 
-const CACHE_TTL_MS = 10_000 // short cache to reduce flicker without staying stale too long
+const CACHE_TTL_MS = 300_000
 const SUBSCRIPTION_CHANGED_EVENT = 'subscription:changed'
 
 function buildSubscriptionInfo(plan: PlanKey, status = 'inactive', cycle = 'monthly', isPremium?: boolean): SubscriptionInfo {

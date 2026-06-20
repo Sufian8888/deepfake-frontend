@@ -8,6 +8,7 @@ import { AnalysisTabs } from "@/components/analysis/analysis-tabs";
 import { ResultsSummary } from "@/components/analysis/results-summary";
 import { ProtectedRoute } from "@/components/protected-route";
 import { predictionsAPI, uploadAPI } from "@/lib/api";
+import { useFrameThumbnails } from "@/hooks/use-frame-thumbnails";
 import { Loader2 } from "lucide-react";
 
 export function AnalysisPageContent() {
@@ -35,28 +36,8 @@ export function AnalysisPageContent() {
 
   const fetchLatestAnalysis = async () => {
     try {
-      const videos = await uploadAPI.listFiles();
-      if (videos.length === 0) {
-        setError("No videos found");
-        setIsLoading(false);
-        return;
-      }
-
-      const completedVideos = videos
-        .filter((v: any) => v.status === "completed")
-        .sort((a: any, b: any) => {
-          const timeA = new Date(a.created_at || 0).getTime();
-          const timeB = new Date(b.created_at || 0).getTime();
-          return timeB - timeA;
-        });
-
-      if (completedVideos.length === 0) {
-        setError("No completed analyses found");
-        setIsLoading(false);
-        return;
-      }
-
-      setVideoId(completedVideos[0].id.toString());
+      const video = await uploadAPI.getLatestCompleted();
+      setVideoId(video.id.toString());
     } catch (err: any) {
       setError(err.message || "Failed to fetch latest analysis");
       setIsLoading(false);
@@ -69,12 +50,18 @@ export function AnalysisPageContent() {
     const fetchAnalysisData = async () => {
       try {
         const id = parseInt(videoId);
-        const video = await uploadAPI.getFile(id);
+        const [video, result] = await Promise.all([
+          uploadAPI.getFile(id),
+          predictionsAPI.getResult(id).catch(() => null),
+        ]);
         setVideoData(video);
 
         if (video.status === "completed") {
-          const result = await predictionsAPI.getResult(id);
-          setAnalysisData(result);
+          if (result) {
+            setAnalysisData(result);
+          } else {
+            setError("Failed to load analysis results");
+          }
         } else {
           setError(`Analysis is ${video.status}. Please wait for completion.`);
         }
@@ -87,6 +74,10 @@ export function AnalysisPageContent() {
 
     fetchAnalysisData();
   }, [videoId]);
+
+  const numericVideoId = videoId ? parseInt(videoId, 10) : undefined;
+  const { enrichedAnalysisData } = useFrameThumbnails(numericVideoId, analysisData);
+  const displayAnalysisData = enrichedAnalysisData || analysisData;
 
   if (isLoading) {
     return (
@@ -115,7 +106,7 @@ export function AnalysisPageContent() {
     );
   }
 
-  if (!videoId || !analysisData) {
+  if (!videoId || !displayAnalysisData) {
     return (
       <ProtectedRoute>
         <AppShell>
@@ -131,14 +122,14 @@ export function AnalysisPageContent() {
     <ProtectedRoute>
       <AppShell fullHeight>
         <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8">
-          <ResultsSummary analysisData={analysisData} videoId={videoId} />
-          {videoData && analysisData && (
+          <ResultsSummary analysisData={displayAnalysisData} videoId={videoId} />
+          {videoData && displayAnalysisData && (
             <>
-              <VideoComparison videoData={videoData} analysisData={analysisData} />
-              <AnalysisTabs analysisData={analysisData} />
+              <VideoComparison videoData={videoData} analysisData={displayAnalysisData} />
+              <AnalysisTabs analysisData={displayAnalysisData} />
             </>
           )}
-          {(!videoData || !analysisData) && (
+          {(!videoData || !displayAnalysisData) && (
             <div className="text-center text-muted-foreground">
               <p>Some analysis components could not load. Please refresh the page.</p>
             </div>

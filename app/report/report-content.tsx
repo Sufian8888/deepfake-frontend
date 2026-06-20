@@ -11,6 +11,7 @@ import { AudioSyncChart } from "@/components/report/audio-sync-chart";
 import { AnomalyTable } from "@/components/report/anomaly-table";
 import { ExplanationSummary } from "@/components/report/explanation-summary";
 import { predictionsAPI, uploadAPI } from "@/lib/api";
+import { useFrameThumbnails } from "@/hooks/use-frame-thumbnails";
 import { Loader2 } from "lucide-react";
 
 export function ReportPageContent() {
@@ -30,12 +31,19 @@ export function ReportPageContent() {
       }
 
       try {
-        const video = await uploadAPI.getFile(parseInt(videoId));
+        const id = parseInt(videoId);
+        const [video, result] = await Promise.all([
+          uploadAPI.getFile(id),
+          predictionsAPI.getResult(id).catch(() => null),
+        ]);
         setVideoData(video);
 
         if (video.status === "completed") {
-          const result = await predictionsAPI.getResult(parseInt(videoId));
-          setAnalysisData(result);
+          if (result) {
+            setAnalysisData(result);
+          } else {
+            setError("Failed to load report data");
+          }
         } else {
           setError(`Analysis is ${video.status}. Please wait for completion.`);
         }
@@ -48,6 +56,10 @@ export function ReportPageContent() {
 
     fetchReportData();
   }, [videoId]);
+
+  const numericVideoId = videoId ? parseInt(videoId, 10) : undefined;
+  const { enrichedAnalysisData } = useFrameThumbnails(numericVideoId, analysisData);
+  const displayAnalysisData = enrichedAnalysisData || analysisData;
 
   if (isLoading) {
     return (
@@ -81,9 +93,9 @@ export function ReportPageContent() {
     );
   }
 
-  const reportSummary = analysisData?.report_summary || analysisData?.analysis_details?.report_summary || {};
-  const finalLabel = reportSummary.final_label || (analysisData?.is_deepfake ? "FAKE" : "REAL");
-  const finalConfidence = Math.round(reportSummary.final_confidence ?? analysisData?.confidence_score ?? 0);
+  const reportSummary = displayAnalysisData?.report_summary || displayAnalysisData?.analysis_details?.report_summary || {};
+  const finalLabel = reportSummary.final_label || (displayAnalysisData?.is_deepfake ? "FAKE" : "REAL");
+  const finalConfidence = Math.round(reportSummary.final_confidence ?? displayAnalysisData?.confidence_score ?? 0);
   const avgProbFake = typeof reportSummary.avg_prob_fake === "number" ? reportSummary.avg_prob_fake : null;
   const isDeepfake = finalLabel === "FAKE";
 
@@ -91,7 +103,7 @@ export function ReportPageContent() {
     <ProtectedRoute>
       <AppShell>
         <div className="mx-auto max-w-7xl space-y-6">
-          <ReportHeader videoData={videoData} analysisData={analysisData} />
+          <ReportHeader videoData={videoData} analysisData={displayAnalysisData} />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <VerdictCard
@@ -100,12 +112,12 @@ export function ReportPageContent() {
               avgProbFake={avgProbFake}
               fallbackIsDeepfake={isDeepfake}
             />
-            <ExplanationSummary analysisData={analysisData} />
+            <ExplanationSummary analysisData={displayAnalysisData} />
           </div>
 
-          <HeatmapGrid analysisData={analysisData} videoData={videoData} />
-          <AudioSyncChart analysisData={analysisData} />
-          <AnomalyTable analysisData={analysisData} />
+          <HeatmapGrid analysisData={displayAnalysisData} videoData={videoData} />
+          <AudioSyncChart analysisData={displayAnalysisData} />
+          <AnomalyTable analysisData={displayAnalysisData} />
         </div>
       </AppShell>
     </ProtectedRoute>

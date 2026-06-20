@@ -22,19 +22,27 @@ export default function UploadPage() {
   const [modelOptions, setModelOptions] = useState<ModelOption[]>(FALLBACK_MODEL_OPTIONS);
 
   useEffect(() => {
+    let cancelled = false
+
     const fetchModels = async () => {
       try {
-        const response = await predictionsAPI.listModels();
-        if (response?.models && Array.isArray(response.models) && response.models.length > 0) {
-          setModelOptions(response.models);
+        const response = await predictionsAPI.listModels()
+        if (!cancelled && response?.models && Array.isArray(response.models) && response.models.length > 0) {
+          setModelOptions(response.models)
         }
       } catch {
-        setModelOptions(FALLBACK_MODEL_OPTIONS);
+        if (!cancelled) {
+          setModelOptions(FALLBACK_MODEL_OPTIONS)
+        }
       }
-    };
+    }
 
-    fetchModels();
-  }, []);
+    fetchModels()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
