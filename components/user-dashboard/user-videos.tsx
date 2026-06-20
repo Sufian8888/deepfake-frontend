@@ -320,7 +320,7 @@ export function UserVideos() {
                         {formatFileSize(video.file_size)}
                       </TableCell>
                       <TableCell>{getStatusBadge(video.status)}</TableCell>
-                      <TableCell>{getResultBadge(video.is_deepfake, video.confidence_score)}</TableCell>
+                      <TableCell>{video.is_deepfake}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {new Date(video.uploaded_at).toLocaleDateString()}
                       </TableCell>
