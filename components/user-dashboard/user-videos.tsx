@@ -237,35 +237,30 @@ export function UserVideos() {
     )
   }
 
-  const getResultBadge = (isDeepfake: boolean | null, confidence: number | null) => {
+  const getResultBadge = (isDeepfake: boolean | null) => {
     if (isDeepfake === null) return <span className="text-muted-foreground text-sm">-</span>
 
     return (
-      <div className="flex flex-col gap-1">
-        <Badge
-          variant="outline"
-          className={
-            isDeepfake
-              ? 'bg-red-500/20 text-red-500 border-red-500/50'
-              : 'bg-green-500/20 text-green-500 border-green-500/50'
-          }
-        >
-          {isDeepfake ? (
-            <>
-              <AlertTriangle className="h-3 w-3 mr-1" />
-              Deepfake
-            </>
-          ) : (
-            <>
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Genuine
-            </>
-          )}
-        </Badge>
-        {confidence !== null && (
-          <span className="text-xs text-muted-foreground">Confidence: {confidence.toFixed(1)}%</span>
+      <Badge
+        variant="outline"
+        className={
+          isDeepfake
+            ? 'bg-red-500/20 text-red-500 border-red-500/50'
+            : 'bg-green-500/20 text-green-500 border-green-500/50'
+        }
+      >
+        {isDeepfake ? (
+          <>
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            Deepfake
+          </>
+        ) : (
+          <>
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Genuine
+          </>
         )}
-      </div>
+      </Badge>
     )
   }
 
@@ -320,7 +315,7 @@ export function UserVideos() {
                         {formatFileSize(video.file_size)}
                       </TableCell>
                       <TableCell>{getStatusBadge(video.status)}</TableCell>
-                      <TableCell>{video.is_deepfake}</TableCell>
+                      <TableCell>{getResultBadge(video.is_deepfake)}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {new Date(video.uploaded_at).toLocaleDateString()}
                       </TableCell>
