@@ -23,8 +23,9 @@ export function PublicNavbar() {
   const { user, isLoading } = useAuth();
 
   const dashboardHref = user?.role === "admin" ? "/admin" : "/user-dashboard";
-  const showProfile = Boolean(user && !isLoading);
-  const showAuthButtons = !user && !isLoading;
+  const showProfile = Boolean(user);
+  const showAuthButtons = !user;
+  const authReady = !isLoading;
 
   const getInitials = (name: string) => {
     return name
@@ -68,7 +69,9 @@ export function PublicNavbar() {
           </div>
 
           {/* Auth Area */}
-          {showProfile ? (
+          {!authReady ? (
+            <div className="hidden md:block h-11 w-32 rounded-2xl bg-muted/30 animate-pulse" />
+          ) : showProfile ? (
             <Link
               href={dashboardHref}
               className="hidden md:flex items-center gap-3 rounded-2xl border border-border/60 bg-card/80 px-3 py-2 text-left shadow-sm transition-all duration-200 hover:border-primary/40 hover:bg-primary/5"
@@ -89,7 +92,7 @@ export function PublicNavbar() {
             </Link>
           ) : null}
 
-          {showAuthButtons ? (
+          {authReady && showAuthButtons ? (
             <div className="hidden md:flex items-center gap-3">
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/login">Login</Link>
@@ -116,7 +119,7 @@ export function PublicNavbar() {
       {isOpen && (
         <div className="md:hidden glass border-t border-border/50">
           <div className="px-4 py-4 space-y-2">
-            {showProfile ? (
+            {authReady && showProfile ? (
               <Link
                 href={dashboardHref}
                 onClick={() => setIsOpen(false)}
@@ -154,7 +157,7 @@ export function PublicNavbar() {
               </Link>
             ))}
 
-            {showAuthButtons ? (
+            {authReady && showAuthButtons ? (
               <div className="pt-4 space-y-2 border-t border-border/50 mt-4">
                 <Button variant="ghost" className="w-full" asChild>
                   <Link href="/login" onClick={() => setIsOpen(false)}>

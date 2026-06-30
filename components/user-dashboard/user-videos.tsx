@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { uploadAPI, predictionsAPI } from '@/lib/api'
+import { useAnalysisCache } from '@/lib/stores/analysis-cache'
 import {
   Table,
   TableBody,
@@ -72,6 +73,9 @@ export function UserVideos() {
   const [analyzingId, setAnalyzingId] = useState<number | null>(null)
   const { toast } = useToast()
   const router = useRouter()
+  const prefetchCompletedVideos = useAnalysisCache((state) => state.prefetchCompletedVideos)
+  const prefetchVideo = useAnalysisCache((state) => state.prefetchVideo)
+  const invalidateVideo = useAnalysisCache((state) => state.invalidateVideo)
 
   const totalPages = Math.max(1, Math.ceil(totalVideos / PAGE_SIZE))
 
@@ -88,6 +92,7 @@ export function UserVideos() {
 
       setVideos(items)
       setTotalVideos(total)
+      prefetchCompletedVideos(items)
 
       const maxPage = Math.max(1, Math.ceil(total / PAGE_SIZE))
       if (page > maxPage) {
@@ -102,7 +107,7 @@ export function UserVideos() {
     } finally {
       setIsLoading(false)
     }
-  }, [currentPage, toast])
+  }, [currentPage, toast, prefetchCompletedVideos])
 
   useEffect(() => {
     let isMounted = true
@@ -119,6 +124,7 @@ export function UserVideos() {
 
         setVideos(items)
         setTotalVideos(total)
+        prefetchCompletedVideos(items)
 
         const hasProcessing = items.some(
           (video: VideoData) => video.status === 'processing' || video.status === 'pending'
@@ -155,13 +161,14 @@ export function UserVideos() {
         clearInterval(intervalId)
       }
     }
-  }, [currentPage, toast])
+  }, [currentPage, toast, prefetchCompletedVideos])
 
   const handleDelete = async () => {
     if (!deleteVideoId) return
 
     try {
       await uploadAPI.deleteFile(deleteVideoId)
+      invalidateVideo(deleteVideoId)
       toast({
         title: 'Success',
         description: 'Video deleted successfully',
@@ -209,7 +216,8 @@ export function UserVideos() {
     }
   }
 
-  const handleViewReport = (videoId: number) => {
+  const handleViewReport = async (videoId: number) => {
+    await prefetchVideo(videoId)
     router.push(`/analysis?videoId=${videoId}`)
   }
 

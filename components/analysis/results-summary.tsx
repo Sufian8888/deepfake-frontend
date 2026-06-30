@@ -1,6 +1,7 @@
 "use client"
 
 import { AlertTriangle, CheckCircle, XCircle, ArrowRight, Film, BarChart3 } from "lucide-react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
@@ -10,9 +11,12 @@ import { downloadAnalysisReport } from "@/components/report/report-download"
 interface ResultsSummaryProps {
   analysisData: any
   videoId: string | null
+  videoData?: any
 }
 
-export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
+export function ResultsSummary({ analysisData, videoId, videoData }: ResultsSummaryProps) {
+  const [isDownloading, setIsDownloading] = useState(false)
+
   if (!analysisData) {
     return (
       <div className="glass rounded-2xl p-6 border border-border/50">
@@ -32,8 +36,13 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
     const verdictBg = isDeepfake ? "bg-destructive/20" : "bg-green-500/20"
     const reportHref = videoId ? `/report?videoId=${videoId}` : "/report"
 
-    const handleDownload = () => {
-      downloadAnalysisReport({ analysisData, videoId })
+    const handleDownload = async () => {
+      try {
+        setIsDownloading(true)
+        await downloadAnalysisReport({ analysisData, videoId, videoData })
+      } finally {
+        setIsDownloading(false)
+      }
     }
 
     const details = analysisData.analysis_details || {}
@@ -95,9 +104,9 @@ export function ResultsSummary({ analysisData, videoId }: ResultsSummaryProps) {
                   Open Report
                 </Link>
               </Button>
-              <Button size="sm" onClick={handleDownload} className="gap-2 glow-blue">
+              <Button size="sm" onClick={handleDownload} disabled={isDownloading} className="gap-2 glow-blue">
                 <Download className="h-4 w-4" />
-                Download Report
+                {isDownloading ? "Generating PDF..." : "Download PDF"}
               </Button>
             </div>
           </div>

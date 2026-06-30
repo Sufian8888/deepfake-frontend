@@ -7,8 +7,9 @@ import { VideoComparison } from "@/components/analysis/video-comparison";
 import { AnalysisTabs } from "@/components/analysis/analysis-tabs";
 import { ResultsSummary } from "@/components/analysis/results-summary";
 import { ProtectedRoute } from "@/components/protected-route";
-import { predictionsAPI, uploadAPI } from "@/lib/api";
+import { uploadAPI } from "@/lib/api";
 import { useFrameThumbnails } from "@/hooks/use-frame-thumbnails";
+import { useAnalysisCache } from "@/lib/stores/analysis-cache";
 import { Loader2 } from "lucide-react";
 
 export function AnalysisPageContent() {
@@ -19,6 +20,9 @@ export function AnalysisPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [videoId, setVideoId] = useState<string | null>(null);
+
+  const getCachedEntry = useAnalysisCache((state) => state.getEntry);
+  const prefetchVideo = useAnalysisCache((state) => state.prefetchVideo);
 
   useEffect(() => {
     if (videoIdParam) {
@@ -47,39 +51,61 @@ export function AnalysisPageContent() {
   useEffect(() => {
     if (!videoId) return;
 
-    const fetchAnalysisData = async () => {
-      try {
-        const id = parseInt(videoId);
-        const [video, result] = await Promise.all([
-          uploadAPI.getFile(id),
-          predictionsAPI.getResult(id).catch(() => null),
-        ]);
-        setVideoData(video);
+    let cancelled = false;
 
-        if (video.status === "completed") {
-          if (result) {
-            setAnalysisData(result);
-          } else {
+    const loadAnalysisData = async () => {
+      const id = parseInt(videoId, 10);
+      setError(null);
+
+      const cached = getCachedEntry(id);
+      if (cached) {
+        setVideoData(cached.video);
+        setAnalysisData(cached.analysis);
+        setIsLoading(false);
+      } else {
+        setIsLoading(true);
+      }
+
+      try {
+        const entry = await prefetchVideo(id, { force: !cached });
+        if (cancelled) return;
+
+        if (!entry) {
+          if (!cached) {
             setError("Failed to load analysis results");
           }
-        } else {
-          setError(`Analysis is ${video.status}. Please wait for completion.`);
+          return;
+        }
+
+        setVideoData(entry.video);
+        setAnalysisData(entry.analysis);
+
+        if (entry.video.status !== "completed") {
+          setError(`Analysis is ${entry.video.status}. Please wait for completion.`);
         }
       } catch (err: any) {
-        setError(err.message || "Failed to load analysis data");
+        if (!cancelled && !cached) {
+          setError(err.message || "Failed to load analysis data");
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
-    fetchAnalysisData();
-  }, [videoId]);
+    loadAnalysisData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [videoId, getCachedEntry, prefetchVideo]);
 
   const numericVideoId = videoId ? parseInt(videoId, 10) : undefined;
   const { enrichedAnalysisData } = useFrameThumbnails(numericVideoId, analysisData);
   const displayAnalysisData = enrichedAnalysisData || analysisData;
 
-  if (isLoading) {
+  if (isLoading && !displayAnalysisData) {
     return (
       <ProtectedRoute>
         <AppShell>
@@ -122,7 +148,7 @@ export function AnalysisPageContent() {
     <ProtectedRoute>
       <AppShell fullHeight>
         <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8">
-          <ResultsSummary analysisData={displayAnalysisData} videoId={videoId} />
+          <ResultsSummary analysisData={displayAnalysisData} videoId={videoId} videoData={videoData} />
           {videoData && displayAnalysisData && (
             <>
               <VideoComparison videoData={videoData} analysisData={displayAnalysisData} />

@@ -1,6 +1,7 @@
 "use client"
 
-import { FileText, Download, Printer, Share2 } from "lucide-react"
+import { FileText, Download } from "lucide-react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useSubscription } from "@/hooks/use-subscription"
 import { authAPI } from "@/lib/api"
@@ -16,6 +17,7 @@ export function ReportHeader({ videoData, analysisData }: ReportHeaderProps) {
   const { isLoading, isProOrAbove } = useSubscription()
   const router = useRouter()
   const user = authAPI.getCurrentUser()
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const handleUpgradeClick = () => {
     if (!user) {
@@ -25,12 +27,17 @@ export function ReportHeader({ videoData, analysisData }: ReportHeaderProps) {
     }
   }
 
-  const handleDownload = () => {
-    downloadAnalysisReport({
-      analysisData,
-      videoId: videoData?.id ? String(videoData.id) : null,
-      videoData,
-    })
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true)
+      await downloadAnalysisReport({
+        analysisData,
+        videoId: videoData?.id ? String(videoData.id) : null,
+        videoData,
+      })
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   return (
@@ -53,9 +60,9 @@ export function ReportHeader({ videoData, analysisData }: ReportHeaderProps) {
               Loading...
             </Button>
           ) : isProOrAbove ? (
-            <Button size="sm" onClick={handleDownload} className="gap-2 glow-blue">
+            <Button size="sm" onClick={handleDownload} disabled={isDownloading} className="gap-2 glow-blue">
               <Download className="h-4 w-4" />
-              Download Report
+              {isDownloading ? "Generating PDF..." : "Download PDF"}
             </Button>
           ) : (
             <Button size="sm" variant="outline" onClick={handleUpgradeClick} className="gap-2">

@@ -63,15 +63,8 @@ function readCachedUser(): User | null {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => readCachedUser());
-  const [isLoading, setIsLoading] = useState(() => {
-    if (typeof window === "undefined") {
-      return true;
-    }
-
-    const tokenPresent = Boolean(localStorage.getItem("token"));
-    return tokenPresent && !readCachedUser();
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   const clearLocalAuth = () => {

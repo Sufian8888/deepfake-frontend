@@ -1,3 +1,6 @@
+import { applyThumbnailsToAnalysis } from "@/lib/frame-analysis"
+import { predictionsAPI, uploadAPI } from "@/lib/api"
+
 type ReportInput = {
   analysisData: any
   videoId?: string | null
@@ -14,6 +17,51 @@ function formatValue(value: unknown): string {
   }
 
   return String(value)
+}
+
+async function enrichReportInput(input: ReportInput): Promise<ReportInput> {
+  const videoId = input.videoId ?? (input.videoData?.id ? String(input.videoData.id) : null)
+  if (!videoId || !input.analysisData) {
+    return input
+  }
+
+  const id = parseInt(videoId, 10)
+  if (Number.isNaN(id)) {
+    return input
+  }
+
+  let videoData = input.videoData
+  let analysisData = input.analysisData
+
+  try {
+    if (!videoData?.original_filename) {
+      videoData = await uploadAPI.getFile(id)
+    }
+  } catch {
+    // Keep whatever video metadata was already available.
+  }
+
+  try {
+    const thumbResponse = await predictionsAPI.getFrameThumbnails(id, 0, 50)
+    const thumbMap: Record<number, string> = {}
+    for (const item of thumbResponse?.items || []) {
+      if (item?.thumbnail_base64) {
+        thumbMap[item.frame_number] = item.thumbnail_base64
+      }
+    }
+    if (Object.keys(thumbMap).length > 0) {
+      analysisData = applyThumbnailsToAnalysis(analysisData, thumbMap)
+    }
+  } catch {
+    // PDF can still be generated without frame images.
+  }
+
+  return {
+    ...input,
+    videoId,
+    videoData,
+    analysisData,
+  }
 }
 
 export function buildAnalysisReportMarkdown({ analysisData, videoId, videoData }: ReportInput) {
@@ -76,19 +124,12 @@ export function buildAnalysisReportMarkdown({ analysisData, videoId, videoData }
   return lines.join("\n")
 }
 
-export function downloadAnalysisReport(input: ReportInput) {
+export async function downloadAnalysisReport(input: ReportInput) {
   if (typeof window === "undefined") {
     return
   }
 
-  const markdown = buildAnalysisReportMarkdown(input)
-  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" })
-  const url = window.URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.href = url
-  link.download = `analysis-report-${input.videoId ?? "latest"}.md`
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.URL.revokeObjectURL(url)
+  const enriched = await enrichReportInput(input)
+  const { downloadAnalysisReportPdf } = await import("./report-pdf")
+  await downloadAnalysisReportPdf(enriched)
 }

@@ -10,8 +10,8 @@ import { HeatmapGrid } from "@/components/report/heatmap-grid";
 import { AudioSyncChart } from "@/components/report/audio-sync-chart";
 import { AnomalyTable } from "@/components/report/anomaly-table";
 import { ExplanationSummary } from "@/components/report/explanation-summary";
-import { predictionsAPI, uploadAPI } from "@/lib/api";
 import { useFrameThumbnails } from "@/hooks/use-frame-thumbnails";
+import { useAnalysisCache } from "@/lib/stores/analysis-cache";
 import { Loader2 } from "lucide-react";
 
 export function ReportPageContent() {
@@ -22,6 +22,9 @@ export function ReportPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const getCachedEntry = useAnalysisCache((state) => state.getEntry);
+  const prefetchVideo = useAnalysisCache((state) => state.prefetchVideo);
+
   useEffect(() => {
     const fetchReportData = async () => {
       if (!videoId) {
@@ -30,38 +33,49 @@ export function ReportPageContent() {
         return;
       }
 
-      try {
-        const id = parseInt(videoId);
-        const [video, result] = await Promise.all([
-          uploadAPI.getFile(id),
-          predictionsAPI.getResult(id).catch(() => null),
-        ]);
-        setVideoData(video);
+      const id = parseInt(videoId, 10);
+      const cached = getCachedEntry(id);
 
-        if (video.status === "completed") {
-          if (result) {
-            setAnalysisData(result);
-          } else {
+      if (cached) {
+        setVideoData(cached.video);
+        setAnalysisData(cached.analysis);
+        setIsLoading(false);
+      } else {
+        setIsLoading(true);
+      }
+
+      try {
+        const entry = await prefetchVideo(id, { force: !cached });
+        if (!entry) {
+          if (!cached) {
             setError("Failed to load report data");
           }
-        } else {
-          setError(`Analysis is ${video.status}. Please wait for completion.`);
+          return;
+        }
+
+        setVideoData(entry.video);
+        setAnalysisData(entry.analysis);
+
+        if (entry.video.status !== "completed") {
+          setError(`Analysis is ${entry.video.status}. Please wait for completion.`);
         }
       } catch (err: any) {
-        setError(err.message || "Failed to load report data");
+        if (!cached) {
+          setError(err.message || "Failed to load report data");
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchReportData();
-  }, [videoId]);
+  }, [videoId, getCachedEntry, prefetchVideo]);
 
   const numericVideoId = videoId ? parseInt(videoId, 10) : undefined;
   const { enrichedAnalysisData } = useFrameThumbnails(numericVideoId, analysisData);
   const displayAnalysisData = enrichedAnalysisData || analysisData;
 
-  if (isLoading) {
+  if (isLoading && !displayAnalysisData) {
     return (
       <ProtectedRoute>
         <AppShell>

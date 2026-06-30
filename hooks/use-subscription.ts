@@ -31,12 +31,17 @@ function readCachedSubscription(): SubscriptionInfo | null {
 }
 
 export function useSubscription() {
-  const cached = React.useMemo(() => readCachedSubscription(), [])
-  const [info, setInfo] = React.useState<SubscriptionInfo | null>(cached)
-  const [isLoading, setIsLoading] = React.useState<boolean>(() => !cached)
+  const [info, setInfo] = React.useState<SubscriptionInfo | null>(null)
+  const [isLoading, setIsLoading] = React.useState<boolean>(true)
 
   React.useEffect(() => {
     let mounted = true
+
+    const cached = readCachedSubscription()
+    if (cached) {
+      setInfo(cached)
+      setIsLoading(false)
+    }
 
     async function load() {
       try {
